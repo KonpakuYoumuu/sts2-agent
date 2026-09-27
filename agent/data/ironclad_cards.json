@@ -1,0 +1,22 @@
+{
+  "_comment": "Heuristic card value (0-10) for Ironclad picks, shops and upgrades, keyed by card NAME (matched case/punctuation-insensitively). Source: nat1gaming.com Ironclad tier list, Aug 13 2026 update (S=9 A=8 B=6.5 C=5 D=3 F=1), cross-checked with spire-codex.com win-rate tiers. Unlisted cards fall back to rarity_default.",
+  "rarity_default": {"Rare": 6, "Uncommon": 5, "Common": 4, "Basic": 1, "Status": -5, "Curse": -8, "Quest": 0},
+  "tiers": {
+    "9":   ["Offering", "Feed"],
+    "8":   ["Crimson Mantle", "Dominate", "Hellraiser", "Corruption", "Thrash", "Impervious", "Unmovable",
+            "Tear Asunder", "Cascade", "Battle Trance", "Fiend Fire", "Conflagration", "Brand", "Demon Form",
+            "Pommel Strike", "Shrug it Off", "Bloodletting", "Stomp", "Colossus", "Stoke", "Stampede"],
+    "6.5": ["Mangle", "Primal Force", "Flame Barrier", "Pacts End", "Dismantle", "Bludgeon", "Demonic Shield",
+            "Armaments", "Uppercut", "Expect a Fight", "Whirlwind", "One-Two Punch", "Forgotten Ritual",
+            "Headbutt", "Rupture", "Feel No Pain", "Taunt", "Inferno", "True Grit", "Cruelty", "Fight Me!",
+            "Burning Pact", "Howl from Beyond", "Pyre"],
+    "6":   ["Break"],
+    "5":   ["Unrelenting", "Body Slam", "Not Yet", "Juggernaut", "Barricade", "Anger", "Second Wind", "Rampage",
+            "Inflame", "Evil Eye", "Spite", "Aggression", "Breakthrough", "Ashen Strike", "Molten Fist", "Rage",
+            "Perfected Strike", "Twin Strike", "Setup Strike", "Bully", "Infernal Blade", "Hemokinesis", "Pillage",
+            "Vicious", "Sword Boomerang", "Blood Wall", "Stone Armor"],
+    "3":   ["Dark Embrace", "Tremble", "Drum of Battle", "Juggling", "Tank", "Thunderclap", "Cinder", "Iron Wave",
+            "Bash"],
+    "1":   ["Havoc", "Strike", "Defend"]
+  }
+}

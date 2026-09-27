@@ -1,0 +1,6 @@
+# Install PyTorch with CUDA first (NVIDIA GPU), then the rest:
+#   python -m pip install torch --index-url https://download.pytorch.org/whl/cu128
+#   python -m pip install -r requirements.txt
+# Without an NVIDIA GPU, plain `pip install torch` (CPU) also works; training is slower.
+torch>=2.7
+pytest>=8

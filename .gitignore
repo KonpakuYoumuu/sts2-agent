@@ -1,0 +1,17 @@
+# Machine-specific installs (recreated by docs/SETUP.md)
+/.venv/
+/.tools/
+
+# Generated data: run logs and built datasets are large; collect your own
+/logs/
+/data/
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Mod build output
+external/STS2MCP/obj/
+external/STS2MCP/out/
+external/STS2MCP/bin/
