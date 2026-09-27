@@ -4,7 +4,9 @@ Each example is one combat decision: the encoded state, the encoded legal
 actions, the index of the teacher's action, and how the fight ended (HP left as
 a fraction of max HP, and whether the player died), for the value head.
 Exploratory (random) moves keep their state but use the bot's intended
-`greedy_action` as the label.
+`greedy_action` as the label. With --relabel, labels come from re-running the
+current rule-based bot on each logged state instead, so fixes to the bot reach
+the network without collecting new games.
 
     python -m agent.learn.build_dataset logs/night_0927 --out data/combat_v1
 """
@@ -18,6 +20,7 @@ import json
 import pickle
 from pathlib import Path
 
+from agent.bots.heuristic import HeuristicBot
 from agent.interface.actions import legal_actions
 from agent.interface.client import COMBAT_TYPES
 from agent.learn.features import Vocab, encode_actions, encode_state, same_action
@@ -48,9 +51,11 @@ def _fight_outcomes(records: list[dict]) -> list[tuple[float, float] | None]:
     return out
 
 
-def build(log_dirs: list[str], vocab: Vocab, val_every: int = 10) -> tuple[list, list, dict]:
+def build(log_dirs: list[str], vocab: Vocab, val_every: int = 10,
+          relabel: bool = False) -> tuple[list, list, dict]:
     train, val = [], []
-    stats = {"runs": 0, "examples": 0, "explore_labels": 0, "label_missing": 0}
+    stats = {"runs": 0, "examples": 0, "explore_labels": 0, "label_missing": 0, "relabeled_changed": 0}
+    teacher = HeuristicBot(seed=0)
     files = sorted(f for d in log_dirs for f in glob.glob(str(Path(d) / "run_*.jsonl.gz")))
     for n, path in enumerate(files):
         records = [json.loads(line) for line in gzip.open(path, "rt", encoding="utf-8")]
@@ -63,6 +68,10 @@ def build(log_dirs: list[str], vocab: Vocab, val_every: int = 10) -> tuple[list,
                 continue
             label_action = rec.get("greedy_action") if rec.get("explore") else action
             actions = legal_actions(state)
+            if relabel:
+                new = teacher.choose(state, actions)
+                stats["relabeled_changed"] += not same_action(new, label_action)
+                label_action = new
             label = next((i for i, a in enumerate(actions) if same_action(a, label_action)), None)
             if label is None:
                 stats["label_missing"] += 1
@@ -85,11 +94,12 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("log_dirs", nargs="+")
     ap.add_argument("--out", default="data/combat_v1")
+    ap.add_argument("--relabel", action="store_true", help="labels from the current rule-based bot")
     args = ap.parse_args()
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     vocab = Vocab()
-    train, val, stats = build(args.log_dirs, vocab)
+    train, val, stats = build(args.log_dirs, vocab, relabel=args.relabel)
     vocab.save(out / "vocab.json")
     with open(out / "dataset.pkl", "wb") as f:
         pickle.dump({"train": train, "val": val}, f)

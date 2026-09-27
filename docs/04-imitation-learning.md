@@ -73,3 +73,16 @@ Results (Ascension 1, 50 runs each; ± is the 95% confidence interval):
 **The network plays about as well as its teacher** (Phase 4 milestone). Every difference is within the noise of 50 runs. The boss gap is the largest, so it's worth re-checking with more runs. Its live disagreements in boss fights show no single pattern (spread over many cards). Decisions take ~5 ms, so it runs at the same speed as the rule-based bot.
 
 As expected, copying a teacher can't beat that teacher. The point of this step is a network that already plays sensibly and an encoding that works live. RL (Phase 5) starts from these weights and improves on the teacher.
+
+## v2: Toxic fix and end-turn guard (2026-09-27)
+
+Watching the bot showed it sometimes ended the turn with energy left. Of 145 such turns in the 50-run test, 138 had nothing playable (empty hand, unplayable status/curse cards, cards too expensive, or cards an enemy effect blocked). Four were Defend/Armaments against an enemy that wasn't attacking, and one each was Body Slam with 0 block and Bloodletting at 2 HP: all correct. The real mistake was **Toxic** ("at the end of your turn, if this is in your Hand, take 5 damage"): the rule-based bot never plays status cards, and the network copied that.
+
+Fixes:
+
+1. **Rule-based bot:** a card that hurts you at end of turn while in hand is worth the damage it prevents (× the block weight). Toxic is the only playable card like this in the logs; Infection, Burn and Decay are unplayable.
+2. **Relabeled data:** `build_dataset --relabel` re-runs the current rule-based bot on every logged state instead of using the logged move, so bot fixes reach the network without new games. Only 47 of 94,458 labels changed, so the fix doesn't touch anything else.
+3. **`models/combat_bc_v2`:** retrained on the relabeled data (`data/combat_v2`); validation agreement 90.1%, the same as v1. On the 276 logged states with a playable Toxic in hand, v1 ended the turn 10 times and v2 never does.
+4. **End-turn guard** in `NNBot` (on by default): if the network wants to end the turn but the rule-based bot still wants to play a card, the rule-based move is played (logged as `guard: true`). The network agrees with the rule-based bot on ending the turn 99.7% of the time, so the guard rarely fires, but it catches rare cases the network couldn't learn from a few dozen examples.
+
+The `nn` bot now uses v2 with the guard.

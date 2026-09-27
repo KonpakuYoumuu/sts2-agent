@@ -85,7 +85,7 @@ It should print `True`.
 
 If the game isn't in the default Steam folder, keep `$env:STS2_GAME_DIR` set or pass `--game-dir`.
 
-Bots: `random`, `heuristic` (rule-based), `nn` (the trained network in `models/combat_bc_v1`, included). Logs go to `logs/` and are not shared through git; collect your own or ask for a copy.
+Bots: `random`, `heuristic` (rule-based), `nn` (the trained network in `models/combat_bc_v2`, included). Logs go to `logs/` and are not shared through git; collect your own or ask for a copy.
 
 ## Working together
 

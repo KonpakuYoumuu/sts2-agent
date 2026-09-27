@@ -2,6 +2,12 @@
 
 The heuristic still sees every state (it tracks the deck for card rewards), and
 its combat choice is logged as `teacher_action` so agreement can be measured live.
+
+End-turn guard: the network never ends the turn while the heuristic still wants
+to play something (e.g. a Toxic it should get rid of). Ending the turn early
+throws the rest of the turn away and is rare in training data, so the network
+can't learn every such case; the guard costs nothing when they agree (99.7%).
+Logged as `guard: true`.
 """
 
 from __future__ import annotations
@@ -17,12 +23,13 @@ from agent.interface.client import COMBAT_TYPES, State
 from agent.learn.features import Vocab, encode_actions, encode_state, same_action
 from agent.learn.model import CombatNet, collate
 
-DEFAULT_MODEL = Path(__file__).resolve().parents[2] / "models" / "combat_bc_v1"
+DEFAULT_MODEL = Path(__file__).resolve().parents[2] / "models" / "combat_bc_v2"
 
 
 class NNBot(Policy):
-    def __init__(self, model_dir: Path = DEFAULT_MODEL, seed: int | None = None):
+    def __init__(self, model_dir: Path = DEFAULT_MODEL, seed: int | None = None, end_turn_guard: bool = True):
         self.base = HeuristicBot(seed=seed)
+        self.end_turn_guard = end_turn_guard
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
         ckpt = torch.load(Path(model_dir) / "model.pt", map_location=self.device)
         cfg = ckpt["config"]
@@ -45,6 +52,10 @@ class NNBot(Policy):
         with torch.no_grad():
             logits, value = self.model(collate([example], self.device))
         action = actions[int(logits[0].argmax())]
-        self.last_info = {"teacher_action": teacher, "agree": same_action(action, teacher),
-                          "value_hp": round(float(torch.sigmoid(value[0, 0])), 3)}
+        info = {"teacher_action": teacher, "agree": same_action(action, teacher),
+                "value_hp": round(float(torch.sigmoid(value[0, 0])), 3)}
+        if self.end_turn_guard and action["action"] == "end_turn" and teacher["action"] != "end_turn":
+            action = teacher
+            info["guard"] = True
+        self.last_info = info
         return action

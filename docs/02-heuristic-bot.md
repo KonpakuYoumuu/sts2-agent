@@ -58,6 +58,7 @@ Floor 17 is the Act 1 boss (Ceremonial Beast, Kin Priest + Kin Followers, or Van
 | Blocked when attacks in hand were lethal | No lethal check | Lethal check (suggested by the user) |
 | One run looped 5,000 steps on "Choose 3 cards to Enchant" | Confirm is enabled with 0 selected; the bot confirmed at once, the empty confirm did nothing, then confirm/cancel ping-ponged | Bot picks the number of cards the prompt asks for before confirming; runner aborts a run after 100 visits to the same state |
 | Played Defend vs a non-attacking Nibbit instead of Whirlwind | Damage into enemy block scored 0; X-cost "X times" counted as one hit | Breaking block worth 0.4/pt; X = energy spent |
+| Ended turns with energy left, holding Toxic (took 5 damage per Toxic) | Status cards scored 0, so "play it to exhaust it" was never considered | Cards that hurt you at end of turn while in hand are worth the damage they prevent (× block weight) |
 
 After the fixes, replaying all ~7,400 logged decisions through the bot finds no turn ended with a useful playable card left.
 

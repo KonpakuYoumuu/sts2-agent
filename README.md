@@ -44,7 +44,7 @@ data/                   built datasets        models/   trained networks
    python -m agent.harness.run --runs 10 --bot random
    ```
 
-   Bots: `random`, `heuristic`, `nn` (loads `models/combat_bc_v1`). Options: `--seed N` (bot randomness), `--log-dir DIR`, `--keep-going` (don't stop when a run gets stuck).
+   Bots: `random`, `heuristic`, `nn` (loads `models/combat_bc_v2`). Options: `--seed N` (bot randomness), `--log-dir DIR`, `--keep-going` (don't stop when a run gets stuck).
 3. **Unattended, headless and ~5× faster** (no window, muted; relaunches the game if it crashes):
 
    ```

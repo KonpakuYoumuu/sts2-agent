@@ -166,3 +166,13 @@ def test_card_select_picks_required_cards_before_confirming():
         "cards": cards, "preview_showing": False, "can_confirm": True, "can_cancel": False}}
     picked = [bot.choose(state, legal_actions(state))["action"] for _ in range(4)]
     assert picked == ["select_card", "select_card", "select_card", "confirm_selection"]
+
+
+TOXIC = {"id": "TOXIC", "name": "Toxic", "type": "Status", "cost": "1", "target_type": "Self", "can_play": True,
+         "description": "At the end of your turn, if this is in your Hand, take 5 damage. Exhaust."}
+
+
+def test_plays_toxic_instead_of_ending_turn_with_energy_left():
+    # The logged mistake: 2 energy, only Toxics in hand, enemy not attacking.
+    state = combat([TOXIC, TOXIC, TOXIC], [enemy(hp=2)], energy=2)
+    assert choose(state)["action"] == "play_card"

@@ -36,3 +36,24 @@ def test_encoding_and_model_score_every_legal_action():
     logits, value = model(collate([{"x": x, "a": a}, {"x": x, "a": a[:1]}]))
     assert logits.shape == (2, 3) and value.shape == (2, 2)
     assert torch.isinf(logits[1, 1:]).all() and torch.isfinite(logits[0]).all()
+
+
+def test_nn_bot_end_turn_guard_follows_teacher(tmp_path):
+    from agent.bots.nn_bot import NNBot
+    from agent.learn.model import CombatNet
+
+    vocab = Vocab()
+    encode_state(STATE, vocab)
+    vocab.save(tmp_path / "vocab.json")
+    model = CombatNet(vocab.sizes(), d=32, layers=1, heads=2)
+    with torch.no_grad():  # every action scores 0, so argmax takes the first one
+        model.scorer[-1].weight.zero_()
+        model.scorer[-1].bias.zero_()
+    torch.save({"state_dict": model.state_dict(), "config": {"sizes": vocab.sizes(), "d": 32, "layers": 1,
+                                                             "heads": 2}}, tmp_path / "model.pt")
+    actions = legal_actions(STATE)
+    actions = actions[-1:] + actions[:-1]  # end_turn first: the network "chooses" it
+    bot = NNBot(tmp_path, seed=0)
+    action = bot.choose(STATE, actions)
+    assert action["action"] == "play_card" and bot.last_info.get("guard")
+    assert NNBot(tmp_path, seed=0, end_turn_guard=False).choose(STATE, actions)["action"] == "end_turn"

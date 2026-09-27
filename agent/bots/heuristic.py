@@ -184,6 +184,10 @@ class HeuristicBot(Policy):
             return 5.0 if not other_attacks else 0.0
         if re.search(r"Add .* into your Hand|Choose 1 of 3", text):
             return 5.0                             # card generation (Infernal Blade, Discovery...)
+        if m := re.search(r"At the end of your turn, if this is in your Hand, take (\d+) damage", text):
+            # Toxic: playing it (it exhausts) prevents the damage, which is
+            # worth as much as that much useful block.
+            return int(m.group(1)) * block_weight
         if card.get("type") in ("Status", "Curse", "Power"):
             return 0.0                             # powers already get a bonus
         fx = parse_card(text)

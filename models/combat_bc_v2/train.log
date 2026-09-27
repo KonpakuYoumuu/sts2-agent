@@ -1,0 +1,44 @@
+C:\slay_the_spire_project\agent\learn\model.py:37: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.norm_first was True
+  self.encoder = nn.TransformerEncoder(layer, layers)
+device=cuda train=84930 val=9528 params=875,523
+{"acc": 0.7416, "equiv_acc": 0.7424, "end_turn_acc": 0.969, "policy_loss": 0.803, "value_loss": 0.3443, "epoch": 1, "train_loss": 1.2983, "seconds": 14.3}
+{"acc": 0.8128, "equiv_acc": 0.8134, "end_turn_acc": 0.9833, "policy_loss": 0.617, "value_loss": 0.3027, "epoch": 2, "train_loss": 0.8647, "seconds": 12.4}
+{"acc": 0.8385, "equiv_acc": 0.8389, "end_turn_acc": 0.9919, "policy_loss": 0.5505, "value_loss": 0.2873, "epoch": 3, "train_loss": 0.7174, "seconds": 12.5}
+{"acc": 0.8598, "equiv_acc": 0.8604, "end_turn_acc": 0.9905, "policy_loss": 0.4967, "value_loss": 0.2659, "epoch": 4, "train_loss": 0.636, "seconds": 12.2}
+{"acc": 0.8742, "equiv_acc": 0.8747, "end_turn_acc": 0.989, "policy_loss": 0.4644, "value_loss": 0.2743, "epoch": 5, "train_loss": 0.5841, "seconds": 12.1}
+{"acc": 0.8716, "equiv_acc": 0.8721, "end_turn_acc": 0.9957, "policy_loss": 0.4926, "value_loss": 0.2818, "epoch": 6, "train_loss": 0.5437, "seconds": 12.1}
+{"acc": 0.8876, "equiv_acc": 0.8881, "end_turn_acc": 0.9929, "policy_loss": 0.4348, "value_loss": 0.2953, "epoch": 7, "train_loss": 0.5156, "seconds": 12.1}
+{"acc": 0.886, "equiv_acc": 0.8868, "end_turn_acc": 0.9857, "policy_loss": 0.4406, "value_loss": 0.3032, "epoch": 8, "train_loss": 0.4878, "seconds": 12.4}
+{"acc": 0.8886, "equiv_acc": 0.8892, "end_turn_acc": 0.9962, "policy_loss": 0.4502, "value_loss": 0.3151, "epoch": 9, "train_loss": 0.4625, "seconds": 16.5}
+{"acc": 0.8932, "equiv_acc": 0.8935, "end_turn_acc": 0.9957, "policy_loss": 0.4357, "value_loss": 0.3053, "epoch": 10, "train_loss": 0.4407, "seconds": 14.9}
+{"acc": 0.8916, "equiv_acc": 0.8921, "end_turn_acc": 0.9986, "policy_loss": 0.4296, "value_loss": 0.3397, "epoch": 11, "train_loss": 0.4263, "seconds": 17.3}
+{"acc": 0.895, "equiv_acc": 0.8957, "end_turn_acc": 0.9976, "policy_loss": 0.4416, "value_loss": 0.3668, "epoch": 12, "train_loss": 0.4044, "seconds": 19.5}
+{"acc": 0.8911, "equiv_acc": 0.8916, "end_turn_acc": 0.9967, "policy_loss": 0.4502, "value_loss": 0.3376, "epoch": 13, "train_loss": 0.3899, "seconds": 19.0}
+{"acc": 0.8917, "equiv_acc": 0.8922, "end_turn_acc": 0.9929, "policy_loss": 0.4408, "value_loss": 0.3624, "epoch": 14, "train_loss": 0.3734, "seconds": 17.6}
+{"acc": 0.8953, "equiv_acc": 0.8958, "end_turn_acc": 0.9976, "policy_loss": 0.4669, "value_loss": 0.3995, "epoch": 15, "train_loss": 0.3582, "seconds": 17.1}
+{"acc": 0.8932, "equiv_acc": 0.8937, "end_turn_acc": 0.9971, "policy_loss": 0.4577, "value_loss": 0.4373, "epoch": 16, "train_loss": 0.3449, "seconds": 15.6}
+{"acc": 0.8937, "equiv_acc": 0.8943, "end_turn_acc": 0.9948, "policy_loss": 0.4703, "value_loss": 0.4055, "epoch": 17, "train_loss": 0.3322, "seconds": 11.0}
+{"acc": 0.898, "equiv_acc": 0.8985, "end_turn_acc": 0.9981, "policy_loss": 0.4752, "value_loss": 0.4594, "epoch": 18, "train_loss": 0.3214, "seconds": 10.9}
+{"acc": 0.8976, "equiv_acc": 0.8981, "end_turn_acc": 0.9971, "policy_loss": 0.4763, "value_loss": 0.4686, "epoch": 19, "train_loss": 0.3101, "seconds": 10.9}
+{"acc": 0.8945, "equiv_acc": 0.8949, "end_turn_acc": 0.9967, "policy_loss": 0.4845, "value_loss": 0.4643, "epoch": 20, "train_loss": 0.3024, "seconds": 10.9}
+{"acc": 0.8977, "equiv_acc": 0.8983, "end_turn_acc": 0.9948, "policy_loss": 0.4914, "value_loss": 0.4677, "epoch": 21, "train_loss": 0.2896, "seconds": 10.8}
+{"acc": 0.8962, "equiv_acc": 0.8968, "end_turn_acc": 0.9971, "policy_loss": 0.5108, "value_loss": 0.4689, "epoch": 22, "train_loss": 0.2811, "seconds": 10.9}
+{"acc": 0.896, "equiv_acc": 0.8966, "end_turn_acc": 0.9952, "policy_loss": 0.5085, "value_loss": 0.4981, "epoch": 23, "train_loss": 0.2728, "seconds": 10.8}
+{"acc": 0.8974, "equiv_acc": 0.898, "end_turn_acc": 0.9967, "policy_loss": 0.5303, "value_loss": 0.4939, "epoch": 24, "train_loss": 0.2642, "seconds": 10.8}
+{"acc": 0.896, "equiv_acc": 0.8965, "end_turn_acc": 0.9962, "policy_loss": 0.5378, "value_loss": 0.5322, "epoch": 25, "train_loss": 0.2583, "seconds": 10.9}
+{"acc": 0.8981, "equiv_acc": 0.8985, "end_turn_acc": 0.9962, "policy_loss": 0.5437, "value_loss": 0.5337, "epoch": 26, "train_loss": 0.2495, "seconds": 10.8}
+{"acc": 0.8959, "equiv_acc": 0.8963, "end_turn_acc": 0.9962, "policy_loss": 0.5465, "value_loss": 0.5405, "epoch": 27, "train_loss": 0.2433, "seconds": 10.8}
+{"acc": 0.8983, "equiv_acc": 0.8988, "end_turn_acc": 0.9971, "policy_loss": 0.5411, "value_loss": 0.5842, "epoch": 28, "train_loss": 0.2397, "seconds": 11.1}
+{"acc": 0.8987, "equiv_acc": 0.8993, "end_turn_acc": 0.9976, "policy_loss": 0.5584, "value_loss": 0.5803, "epoch": 29, "train_loss": 0.2339, "seconds": 11.8}
+{"acc": 0.8996, "equiv_acc": 0.9001, "end_turn_acc": 0.9967, "policy_loss": 0.5438, "value_loss": 0.584, "epoch": 30, "train_loss": 0.2305, "seconds": 11.5}
+{"acc": 0.9005, "equiv_acc": 0.901, "end_turn_acc": 0.9971, "policy_loss": 0.5522, "value_loss": 0.6057, "epoch": 31, "train_loss": 0.2279, "seconds": 11.6}
+{"acc": 0.8984, "equiv_acc": 0.8989, "end_turn_acc": 0.9967, "policy_loss": 0.5637, "value_loss": 0.6199, "epoch": 32, "train_loss": 0.2221, "seconds": 11.3}
+{"acc": 0.901, "equiv_acc": 0.9016, "end_turn_acc": 0.9971, "policy_loss": 0.5592, "value_loss": 0.6279, "epoch": 33, "train_loss": 0.2214, "seconds": 11.0}
+{"acc": 0.8984, "equiv_acc": 0.8989, "end_turn_acc": 0.9967, "policy_loss": 0.5701, "value_loss": 0.6268, "epoch": 34, "train_loss": 0.2194, "seconds": 11.2}
+{"acc": 0.9002, "equiv_acc": 0.9007, "end_turn_acc": 0.9967, "policy_loss": 0.5704, "value_loss": 0.6255, "epoch": 35, "train_loss": 0.2168, "seconds": 10.2}
+{"acc": 0.9001, "equiv_acc": 0.9006, "end_turn_acc": 0.9967, "policy_loss": 0.5677, "value_loss": 0.6301, "epoch": 36, "train_loss": 0.2141, "seconds": 9.9}
+{"acc": 0.9002, "equiv_acc": 0.9007, "end_turn_acc": 0.9967, "policy_loss": 0.5699, "value_loss": 0.6292, "epoch": 37, "train_loss": 0.2134, "seconds": 9.5}
+{"acc": 0.9005, "equiv_acc": 0.901, "end_turn_acc": 0.9967, "policy_loss": 0.5688, "value_loss": 0.6295, "epoch": 38, "train_loss": 0.2138, "seconds": 9.5}
+{"acc": 0.9004, "equiv_acc": 0.9009, "end_turn_acc": 0.9967, "policy_loss": 0.5692, "value_loss": 0.6325, "epoch": 39, "train_loss": 0.2118, "seconds": 9.1}
+{"acc": 0.9, "equiv_acc": 0.9005, "end_turn_acc": 0.9967, "policy_loss": 0.5692, "value_loss": 0.6325, "epoch": 40, "train_loss": 0.2129, "seconds": 8.8}
+best val acc 0.9010; saved models\combat_bc_v2\model.pt
