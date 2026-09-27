@@ -22,9 +22,9 @@ Card text is dynamic: descriptions already include the player's Strength/Dexteri
 
 | Screen | Rule |
 |---|---|
-| Map | Looks 4 floors ahead through the map graph (discount 0.7). Elites: +4 above 80% HP, −6 below 60%. Rest: +5 below 50% HP. Shop: +3 with ≥120 gold. Treasure +4, Unknown +2.5, Monster +2 |
+| Map | Route planner ([route.py](../agent/bots/route.py)): picks the next node that maximizes the estimated chance of beating the act boss. Tracks HP along every route to the boss with losses and death risks measured from the logs (hallway fight 9% of max HP; elite 38% up to row 8, 25% after; death risk rising at low HP), small multipliers for rewards (elite relic ×1.08, treasure ×1.05), and a boss-win curve by arrival HP. Later choices are optimized too (dynamic programming), so a rest after an elite counts. Replaced the 4-floor lookahead with fixed node scores |
 | Card reward | Tier-list value, minus 1.5 per copy already in the deck and −1 at 25+ cards; +1 for attacks early in Act 1; skip below 5 |
-| Rest site | Heal below 55% HP, else Smith (upgrade the best card) |
+| Rest site | Same planner: heal if that gives a better chance at the boss than upgrading (×1.05). Right before the boss that means heal unless HP ≥ 90% (was: heal below 55%). Without map context: heal below 55% HP |
 | Shop | Card removal (9) > relics (8) > cards valued ≥7 > cheap potions if the belt has room; then leave |
 | Card grids | Remove/transform the worst card (curses first); upgrade/enchant/choose the best |
 | Events | Keyword scoring: +Max HP, relic, upgrade, remove, rare, gold; −curse, injury; −lost HP (more when HP is low) |
@@ -43,6 +43,8 @@ The deck is only visible during combat, so the bot records it (all piles) at the
 | `overnight_0927b` | + deck tracking, Rage/unknown cards, block scaling, 10% exploration | 2 | 11, 12 | Stopped after finding the X-cost / enemy-block bugs |
 | `overnight_0927c` | + X-cost damage, damage into block | 11 | median 9 | Windowed; replaced by headless |
 | `night_0927` | same, **headless + fast mode**, 10% exploration, mostly **Ascension 1** | **596** | p25 9, **median 17**, p75 17, max **50** | 119 beat Act 1 (20%), 4 reached Act 3, 1 reached the final boss; 0 wins |
+| `eval_heur_0927` | same as night_0927, no exploration | 50 | mean 16.9, median 17 | 22% beat Act 1; baseline for the route planner |
+| `eval_route_0927` | + **route planner** (map + rest by estimated boss-win chance) | 26 (stopped early) | mean 22.6, median 21.5 | **54% beat Act 1** (vs 22% in `eval_heur_0927`, same bot without the planner); 89% reach the Act 1 boss (was 58%) with 86% HP (was 71%); early elites 0.04 per run (was 0.76) |
 
 Floor 17 is the Act 1 boss (Ceremonial Beast, Kin Priest + Kin Followers, or Vantom). **The Act 1 boss is the main wall.**
 

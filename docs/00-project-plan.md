@@ -6,12 +6,23 @@
 |---|---|---|
 | 1. Interface | ✅ Done | STS2MCP mod (patched for the Enchant screen) + Python client; random bot finished 20/20 runs with no hangs |
 | 2. Harness & logging | ✅ Done | Every decision logged; headless fast mode + supervisor: **~75 runs/hour** unattended (was ~30 windowed); `--explore` flags random moves |
-| 3. Heuristic baseline | 🔄 In progress | 596-run headless batch: median floor 17 (Act 1 boss), 20% beat Act 1, best floor 50 (final boss); no wins yet |
+| 3. Heuristic baseline | 🔄 In progress | 596-run headless batch: median floor 17 (Act 1 boss), 20% beat Act 1, best floor 50 (final boss); no wins yet. **Route planner (Step 1): 54% beat Act 1 vs 22% before** (26-run early result) |
 | 4. Imitation learning | ✅ Done (combat) | Transformer combat policy copies the rule-based bot's move 90% of the time and **plays about as well live** (50 vs 50 runs: floor 16.6 vs 16.9, same HP loss within noise); trains in 6 min on the GPU ([04-imitation-learning.md](04-imitation-learning.md)) |
 | 5. Combat simulator | 🔄 Spike step 1 done | Real game runs headless with the developers' fast switches: exact rules, ~5× faster (~75 runs/h). Next: start fights directly from the mod for combat-only episodes ([03-simulator-feasibility.md](03-simulator-feasibility.md)) |
 | 6–7 | ⏳ Not started | |
 
 Details: [01-interface-research.md](01-interface-research.md) (interface, mod quirks), [02-heuristic-bot.md](02-heuristic-bot.md) (rule-based bot, results, known weaknesses).
+
+## Next steps toward a high win rate (agreed 2026-09-27)
+
+Where the bot loses (596 runs): 80% of deaths are in Act 1 (boss 38%, elites 26%, normal fights 16%). The strongest predictor of beating the Act 1 boss is HP on arrival (15% at 40–60% HP, 40–45% above 60%); deck size, basics left and relic count barely differ between wins and losses. So combat play is weak, and HP is spent badly on the way to the boss.
+
+| Step | What | Why |
+|---|---|---|
+| 1. Route & rest planning ✅ (first result) | Choose map routes and heal/upgrade by an estimated chance of beating the act boss, with HP losses and death risk measured from the logs (early elites are the costliest) | Cheap, measurable; targets HP at the boss |
+| 2. Fight arena | Mod change: start any fight (enemy, deck, HP, relics) directly in the headless game; fixed fight suites for evaluation | Thousands of fights/hour, exact comparisons; prerequisite for RL |
+| 3. Combat RL (+ lookahead) | PPO from the imitation weights in the arena; try in-game lookahead for the current turn | The step that can beat the rule-based teacher |
+| 4. Strategy network | Value network predicting run progress from deck/relics/HP/floor; overnight runs with randomized strategic choices; the user's recorded wins as examples | Replaces the rule-based card/path/shop/event choices |
 
 ## Goal and scope
 

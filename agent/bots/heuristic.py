@@ -17,14 +17,13 @@ from typing import Callable
 
 from agent.bots.base import Policy
 from agent.bots.parsing import enemy_attack, parse_card, power_amount
+from agent.bots.route import RoutePlanner
 from agent.interface.actions import Action
 from agent.interface.client import COMBAT_TYPES, State
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
 # Map node values; elites and rests depend on HP, shops on gold.
-MAP_LOOKAHEAD = 4
-MAP_DISCOUNT = 0.7
 
 # Deck building: each existing copy of a card lowers the value of another one.
 DUPLICATE_PENALTY = 1.5
@@ -61,6 +60,9 @@ class HeuristicBot(Policy):
         # Deck card names, recorded at the start of each combat: the only time the
         # mod exposes the full deck.
         self.deck: list[str] = []
+        # Planner and node from the last map choice, for the rest-site decision.
+        self.route: RoutePlanner | None = None
+        self.route_node: dict | None = None
 
     # ---- dispatch ---------------------------------------------------------
 
@@ -357,36 +359,18 @@ class HeuristicBot(Policy):
 
     # ---- map --------------------------------------------------------------
 
-    def _node_value(self, node_type: str, hp_ratio: float, gold: int) -> float:
-        return {
-            "Monster": 2.0,
-            "Elite": 4.0 if hp_ratio > 0.8 else (0.5 if hp_ratio > 0.6 else -6.0),
-            "RestSite": 5.0 if hp_ratio < 0.5 else 1.5,
-            "Shop": 3.0 if gold >= 120 else 0.5,
-            "Treasure": 4.0,
-            "Unknown": 2.5,
-        }.get(node_type, 0.0)
-
     def _map(self, state: State, actions: list[Action]) -> Action | None:
-        m = state["map"]
-        nodes = {(n["col"], n["row"]): n for n in m.get("nodes", [])}
-        hp_ratio = self._hp_ratio(state)
-        gold = (state.get("player") or {}).get("gold", 0)
-
-        def value(col: int, row: int, node_type: str, depth: int) -> float:
-            v = self._node_value(node_type, hp_ratio, gold)
-            node = nodes.get((col, row))
-            if depth >= MAP_LOOKAHEAD or not node or not node.get("children"):
-                return v
-            kids = [nodes.get((c, r)) for c, r in node["children"]]
-            return v + MAP_DISCOUNT * max((value(k["col"], k["row"], k["type"], depth + 1)
-                                           for k in kids if k), default=0.0)
-
-        options = {o["index"]: o for o in m.get("next_options", [])}
+        """The route with the best estimated chance of beating the act boss (see route.py)."""
+        planner = RoutePlanner(state["map"], gold=(state.get("player") or {}).get("gold", 0))
+        hp = self._hp_ratio(state)
+        options = {o["index"]: o for o in state["map"].get("next_options", [])}
         picks = self._of(actions, "choose_map_node")
-        return max(picks, key=lambda a: value(options[a["index"]]["col"], options[a["index"]]["row"],
-                                              options[a["index"]]["type"], 0) + self.rng.random() * 0.01,
-                   default=None)
+        if not picks:
+            return None
+        best = max(picks, key=lambda a: planner.value(options[a["index"]], hp) + self.rng.random() * 1e-6)
+        chosen = options[best["index"]]
+        self.route, self.route_node = planner, planner.nodes.get((chosen["col"], chosen["row"]), chosen)
+        return best
 
     # ---- rooms ------------------------------------------------------------
 
@@ -395,7 +379,10 @@ class HeuristicBot(Policy):
         by_id = {options[a["index"]]["id"].upper(): a for a in self._of(actions, "choose_rest_option")}
         if not by_id:
             return (self._of(actions, "proceed") or [None])[0]
-        if self._hp_ratio(state) < 0.55 and "HEAL" in by_id:
+        hp = self._hp_ratio(state)
+        if self.route and self.route_node and self.route_node.get("type") == "RestSite"                 and {"HEAL", "SMITH"} <= by_id.keys():
+            return by_id[self.route.rest_choice(self.route_node, hp)[0]]
+        if hp < 0.55 and "HEAL" in by_id:  # no map context (e.g. a rest site from an event)
             return by_id["HEAL"]
         for pref in ("SMITH", "HEAL"):
             if pref in by_id:

@@ -44,6 +44,30 @@ def fights(path: str) -> list[dict]:
     return out
 
 
+def route_stats(path: str) -> dict:
+    """Act 1 route outcome: boss reached, HP fraction on arrival, elites fought."""
+    reached, hp_at_boss, early, late = False, None, 0, 0
+    prev_type = None
+    for line in gzip.open(path, "rt", encoding="utf-8"):
+        s = json.loads(line)["state"]
+        st, run = s.get("state_type"), s.get("run") or {}
+        if run.get("act") != 1:
+            if run.get("act"):
+                break
+            continue
+        if st == "elite" and prev_type != "elite":
+            early += run.get("floor", 0) <= 9
+            late += run.get("floor", 0) > 9
+        if st == "boss" and not reached:
+            p = s.get("player") or {}
+            reached, hp_at_boss = True, (p.get("hp") or 0) / max(p.get("max_hp") or 1, 1)
+        if st in FIGHT_TYPES:
+            prev_type = st if st != "hand_select" else prev_type
+        else:
+            prev_type = st
+    return {"reached": reached, "hp_at_boss": hp_at_boss, "early_elites": early, "late_elites": late}
+
+
 def report(log_dir: str) -> dict:
     summary = [json.loads(line) for line in open(Path(log_dir) / "summary.jsonl", encoding="utf-8")]
     runs = [r for r in summary if r["outcome"] in ("death", "victory")]
@@ -56,11 +80,17 @@ def report(log_dir: str) -> dict:
             by_kind[f"act1_{kind}_hp_lost"] = round(statistics.mean(f["lost"] for f in fs), 1)
             by_kind[f"act1_{kind}_n"] = len(fs)
     agree = [a for f in all_fights for a in f["agree"]]
+    routes = [route_stats(path) for path in sorted(glob.glob(str(Path(log_dir) / "run_*.jsonl.gz")))]
+    boss_hp = [r["hp_at_boss"] for r in routes if r["reached"]]
     return {
         "runs": len(runs), "wins": sum(r["outcome"] == "victory" for r in runs),
         "floor_mean": round(statistics.mean(floors), 1) if floors else None,
         "floor_median": statistics.median(floors) if floors else None,
         "beat_act1": round(sum(f > 17 for f in floors) / max(len(floors), 1), 3),
+        "reached_act1_boss": round(sum(r["reached"] for r in routes) / max(len(routes), 1), 3),
+        "hp_at_act1_boss": round(statistics.mean(boss_hp), 3) if boss_hp else None,
+        "early_elites_per_run": round(statistics.mean(r["early_elites"] for r in routes), 2) if routes else None,
+        "late_elites_per_run": round(statistics.mean(r["late_elites"] for r in routes), 2) if routes else None,
         **by_kind,
         "teacher_agreement": round(sum(agree) / len(agree), 3) if agree else None,
         "stuck": sum(r["outcome"] == "stuck" for r in summary),

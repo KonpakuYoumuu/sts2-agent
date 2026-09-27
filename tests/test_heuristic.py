@@ -176,3 +176,40 @@ def test_plays_toxic_instead_of_ending_turn_with_energy_left():
     # The logged mistake: 2 energy, only Toxics in hand, enemy not attacking.
     state = combat([TOXIC, TOXIC, TOXIC], [enemy(hp=2)], energy=2)
     assert choose(state)["action"] == "play_card"
+
+
+def _map_state(hp, nodes, options):
+    return {"state_type": "map", "player": {"hp": hp, "max_hp": 80, "gold": 50},
+            "map": {"nodes": nodes, "next_options": options}}
+
+
+def _node(col, row, type_, children=()):
+    return {"col": col, "row": row, "type": type_, "children": [list(c) for c in children]}
+
+
+def test_route_skips_early_elite_even_at_full_hp():
+    nodes = [_node(0, 2, "Elite", [(0, 16)]), _node(1, 2, "Monster", [(0, 16)]), _node(0, 16, "Boss")]
+    state = _map_state(80, nodes, [{"index": 0, "col": 0, "row": 2, "type": "Elite"},
+                                   {"index": 1, "col": 1, "row": 2, "type": "Monster"}])
+    assert choose(state)["index"] == 1
+
+
+def test_route_takes_late_elite_when_a_rest_follows():
+    nodes = [_node(0, 13, "Elite", [(0, 15)]), _node(1, 13, "Monster", [(1, 15)]),
+             _node(0, 15, "RestSite", [(0, 16)]), _node(1, 15, "Monster", [(0, 16)]), _node(0, 16, "Boss")]
+    state = _map_state(80, nodes, [{"index": 0, "col": 0, "row": 13, "type": "Elite"},
+                                   {"index": 1, "col": 1, "row": 13, "type": "Monster"}])
+    assert choose(state)["index"] == 0
+
+
+def test_rest_before_boss_heals_unless_nearly_full():
+    nodes = [_node(0, 15, "RestSite", [(0, 16)]), _node(0, 16, "Boss")]
+    for hp, expected in ((60, "HEAL"), (76, "SMITH")):  # 75% and 95% of 80
+        bot = HeuristicBot(seed=0)
+        m = _map_state(hp, nodes, [{"index": 0, "col": 0, "row": 15, "type": "RestSite"}])
+        bot.choose(m, legal_actions(m))
+        rest = {"state_type": "rest_site", "player": {"hp": hp, "max_hp": 80},
+                "rest_site": {"can_proceed": False, "options": [
+                    {"index": 0, "id": "HEAL", "is_enabled": True}, {"index": 1, "id": "SMITH", "is_enabled": True}]}}
+        chosen = bot.choose(rest, legal_actions(rest))["index"]
+        assert ("HEAL", "SMITH")[chosen] == expected
