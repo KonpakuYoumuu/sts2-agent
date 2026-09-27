@@ -122,6 +122,12 @@ class GameClient:
 
 
 COMBAT_TYPES = {"monster", "elite", "boss"}
+# After the final boss the game shows this event, then the game-over screen.
+VICTORY_EVENT = "THE_ARCHITECT"
+
+
+def is_victory_event(state: State) -> bool:
+    return state.get("state_type") == "event" and (state.get("event") or {}).get("event_id") == VICTORY_EVENT
 
 
 def is_settled(state: State) -> bool:

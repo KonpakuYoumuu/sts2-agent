@@ -20,7 +20,7 @@ import time
 from pathlib import Path
 
 from agent.harness.runner import fingerprint
-from agent.interface.client import GameClient, GameNotRunning, is_settled
+from agent.interface.client import GameClient, GameNotRunning, is_settled, is_victory_event
 
 
 def main() -> int:
@@ -32,6 +32,10 @@ def main() -> int:
     args = p.parse_args()
 
     client = GameClient()
+    if not client.ping():
+        print("Waiting for the game to start...", flush=True)
+        while not client.ping():
+            time.sleep(2)
     args.out.mkdir(parents=True, exist_ok=True)
     path = args.file or args.out / time.strftime("human_%Y%m%d-%H%M%S.jsonl.gz")
     print(f"Recording to {path}. Play normally; recording ends at game over (or Ctrl+C).", flush=True)
@@ -40,6 +44,7 @@ def main() -> int:
     last_fp = None
     n = 0
     in_run = False
+    reached_ending = False
     # Append mode adds a new gzip member; readers see one continuous file.
     with gzip.open(path, "at", encoding="utf-8") as log:
         while True:
@@ -49,6 +54,7 @@ def main() -> int:
                 print("Game closed; stopping.", flush=True)
                 break
             st = state.get("state_type")
+            reached_ending = reached_ending or is_victory_event(state)
             if st != "menu":
                 in_run = True
             if in_run and is_settled(state):
@@ -62,8 +68,8 @@ def main() -> int:
                         run = state.get("run") or {}
                         print(f"  {n} states  act {run.get('act')} floor {run.get('floor')}  [{st}]", flush=True)
             if st == "game_over":
-                player = state.get("player") or {}
-                print(f"Game over (hp {player.get('hp')}); {n} states recorded.", flush=True)
+                # The game-over screen shows 0 HP after a win too.
+                print(f"Game over ({'victory' if reached_ending else 'death'}); {n} states recorded.", flush=True)
                 break
             time.sleep(args.shop_poll if st in ("shop", "fake_merchant") else args.poll)
     return 0

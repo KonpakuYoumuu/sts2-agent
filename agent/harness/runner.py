@@ -20,7 +20,7 @@ from typing import Any
 
 from agent.bots.base import Policy
 from agent.interface.actions import PROGRESS_ACTIONS, Action, action_key, legal_actions
-from agent.interface.client import GameClient, State, StateTimeout
+from agent.interface.client import GameClient, State, StateTimeout, is_victory_event
 
 # After this many visits to an identical state, only progress actions are allowed.
 MAX_VISITS_BEFORE_FORCING = 25
@@ -196,11 +196,13 @@ class Runner:
         state: State | None = None
         try:
             state = self.start_run()
+            reached_ending = False
             with gzip.open(log_path, "wt", encoding="utf-8") as log:
                 for step in range(MAX_STEPS_PER_RUN):
                     st = state.get("state_type")
+                    reached_ending = reached_ending or is_victory_event(state)
                     if st == "game_over":
-                        self._finish(result, state)
+                        self._finish(result, state, reached_ending)
                         log.write(json.dumps({"step": step, "state": state, "terminal": True}) + "\n")
                         self.client.act({"action": "menu_select", "option": "main_menu"})
                         break
@@ -266,12 +268,13 @@ class Runner:
         return result
 
     @staticmethod
-    def _finish(result: RunResult, state: State) -> None:
+    def _finish(result: RunResult, state: State, reached_ending: bool) -> None:
         run = state.get("run") or {}
         player = state.get("player") or {}
         result.act, result.floor, result.hp = run.get("act"), run.get("floor"), player.get("hp")
         result.extra["ascension"] = run.get("ascension")
-        result.outcome = "victory" if (player.get("hp") or 0) > 0 else "death"
+        # The game-over screen reports 0 HP after a win too, so HP can't tell them apart.
+        result.outcome = "victory" if reached_ending else "death"
         result.extra["game_over"] = state.get("game_over")
 
     # ---- many runs --------------------------------------------------------

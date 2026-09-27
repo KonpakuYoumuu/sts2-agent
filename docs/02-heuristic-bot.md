@@ -64,7 +64,9 @@ After the fixes, replaying all ~7,400 logged decisions through the bot finds no 
 
 ## Human play recording
 
-`python -m agent.harness.record_human` logs every distinct settled state while a person plays (the mod can't report which button a human pressed, so actions are inferred later from consecutive states). In shops it polls only every 10 s, because each state read re-opens the shop inventory. First recording: `logs/human/human_20260927-010201.jsonl.gz`, **floors 1–8 of a winning run** (108 states); the rest of that run wasn't recorded.
+`python -m agent.harness.record_human` waits for the game to start, then logs every distinct settled state while a person plays (the mod can't report which button a human pressed, so actions are inferred later from consecutive states). In shops it polls only every 10 s, because each state read re-opens the shop inventory. First recording: `logs/human/human_20260927-010201.jsonl.gz`, **floors 1–8 of a winning run** (108 states); the rest of that run wasn't recorded.
+
+Second recording: `logs/human/human_20260927-161932.jsonl.gz`, a **complete winning Ascension 1 run** (48 floors, final boss Aeonglass), 1,471 states over 29 minutes. Arrived at each boss with high HP (80/80, 67/83, 85/85), which is the factor that best predicts the bot's Act 1 boss results. By the end the deck had no Strikes left, and every card was upgraded (Apotheosis).
 
 ## Known weaknesses (next to fix)
 

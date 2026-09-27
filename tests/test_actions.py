@@ -105,3 +105,12 @@ def test_combat_with_no_targetable_enemies_is_still_a_player_turn():
     assert {"action": "play_card", "card_index": 1} in actions      # self-target card
     assert not any(a.get("card_index") == 0 for a in actions)       # attack has no target
     assert actions[-1] == {"action": "end_turn"}
+
+
+def test_victory_is_detected_by_the_ending_event_not_hp():
+    from agent.interface.client import is_victory_event
+
+    architect = {"state_type": "event", "event": {"event_id": "THE_ARCHITECT", "options": []}}
+    assert is_victory_event(architect)
+    assert not is_victory_event({"state_type": "event", "event": {"event_id": "NEOW"}})
+    assert not is_victory_event({"state_type": "game_over", "player": {"hp": 0}})

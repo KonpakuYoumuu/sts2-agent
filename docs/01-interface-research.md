@@ -91,6 +91,7 @@ Found during unattended headless collection (2026-09-27):
 | Runner logged ~600 empty "stuck" runs in seconds | Headless main menu has no options for ~1 s after launch; `--keep-going` retried instantly | Menu with no options isn't "settled"; runner stops after 3 stuck runs in a row and pauses 5 s after each |
 | Restarted collection overwrote earlier run logs | Run numbering restarted at 0 | Numbering continues from `summary.jsonl` |
 | Final-boss fight stalled 60 s, run marked stuck | A boss phase had **no targetable enemies**; the client required a living enemy before calling combat actionable | A player turn in play phase is actionable even with an empty enemy list |
+| Wins would be logged as deaths | The game-over screen reports 0 HP after a win too; the runner decided by HP | A run is a win if it reached the ending event (The Architect) that follows the final boss. Checked against the game's own run history: the bot has no wins so far, and none were mislabeled |
 | Human recording blocked leaving shops | Every state read re-opens the shop inventory | Recorder polls every 10 s in shops |
 
 ## Status: done (Phase 1 complete)
