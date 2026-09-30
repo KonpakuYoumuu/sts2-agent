@@ -112,5 +112,6 @@ def collate(examples: list[dict], device: str | torch.device = "cpu") -> dict[st
     batch["act_card_key"] = t(_pad(keys, -2))
     if "y" in examples[0]:
         batch["y"] = t([e["y"] for e in examples])
+    if "v" in examples[0]:
         batch["v"] = t([list(e["v"]) for e in examples], torch.float)
     return batch
