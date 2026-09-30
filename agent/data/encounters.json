@@ -1,0 +1,531 @@
+{
+ "AEONGLASS_BOSS": {
+  "kind": "boss",
+  "act": 3,
+  "monsters": [
+   "AEONGLASS"
+  ],
+  "seen": 1
+ },
+ "AXEBOTS_NORMAL": {
+  "kind": "monster",
+  "act": 3,
+  "monsters": [
+   "AXEBOT"
+  ],
+  "seen": 1
+ },
+ "BATTLEWORN_DUMMY_EVENT_ENCOUNTER": {
+  "kind": "monster",
+  "act": 3,
+  "monsters": [
+   "BATTLE_FRIEND_V2"
+  ],
+  "seen": 1
+ },
+ "BOWLBUGS_NORMAL": {
+  "kind": "monster",
+  "act": 2,
+  "monsters": [
+   "BOWLBUG_NECTAR",
+   "BOWLBUG_ROCK",
+   "BOWLBUG_SILK"
+  ],
+  "seen": 34
+ },
+ "BOWLBUGS_WEAK": {
+  "kind": "monster",
+  "act": 2,
+  "monsters": [
+   "BOWLBUG_EGG",
+   "BOWLBUG_ROCK"
+  ],
+  "seen": 83
+ },
+ "BYGONE_EFFIGY_ELITE": {
+  "kind": "elite",
+  "act": 1,
+  "monsters": [
+   "BYGONE_EFFIGY"
+  ],
+  "seen": 301
+ },
+ "BYRDONIS_ELITE": {
+  "kind": "elite",
+  "act": 1,
+  "monsters": [
+   "BYRDONIS"
+  ],
+  "seen": 284
+ },
+ "CEREMONIAL_BEAST_BOSS": {
+  "kind": "boss",
+  "act": 1,
+  "monsters": [
+   "CEREMONIAL_BEAST"
+  ],
+  "seen": 153
+ },
+ "CHOMPERS_NORMAL": {
+  "kind": "monster",
+  "act": 2,
+  "monsters": [
+   "CHOMPER",
+   "CHOMPER"
+  ],
+  "seen": 31
+ },
+ "CONSTRUCT_MENAGERIE_NORMAL": {
+  "kind": "monster",
+  "act": 3,
+  "monsters": [
+   "CUBEX_CONSTRUCT",
+   "CUBEX_CONSTRUCT",
+   "PUNCH_CONSTRUCT"
+  ],
+  "seen": 2
+ },
+ "CUBEX_CONSTRUCT_NORMAL": {
+  "kind": "monster",
+  "act": 1,
+  "monsters": [
+   "CUBEX_CONSTRUCT"
+  ],
+  "seen": 141
+ },
+ "DECIMILLIPEDE_ELITE": {
+  "kind": "elite",
+  "act": 2,
+  "monsters": [
+   "DECIMILLIPEDE_SEGMENT_BACK",
+   "DECIMILLIPEDE_SEGMENT_FRONT",
+   "DECIMILLIPEDE_SEGMENT_MIDDLE"
+  ],
+  "seen": 36
+ },
+ "DENSE_VEGETATION_EVENT_ENCOUNTER": {
+  "kind": "monster",
+  "act": 1,
+  "monsters": [
+   "WRIGGLER",
+   "WRIGGLER",
+   "WRIGGLER",
+   "WRIGGLER"
+  ],
+  "seen": 81
+ },
+ "DEVOTED_SCULPTOR_WEAK": {
+  "kind": "monster",
+  "act": 3,
+  "monsters": [
+   "DEVOTED_SCULPTOR"
+  ],
+  "seen": 6
+ },
+ "ENTOMANCER_ELITE": {
+  "kind": "elite",
+  "act": 2,
+  "monsters": [
+   "ENTOMANCER"
+  ],
+  "seen": 35
+ },
+ "EXOSKELETONS_NORMAL": {
+  "kind": "monster",
+  "act": 2,
+  "monsters": [
+   "EXOSKELETON",
+   "EXOSKELETON",
+   "EXOSKELETON",
+   "EXOSKELETON"
+  ],
+  "seen": 32
+ },
+ "EXOSKELETONS_WEAK": {
+  "kind": "monster",
+  "act": 2,
+  "monsters": [
+   "EXOSKELETON",
+   "EXOSKELETON",
+   "EXOSKELETON"
+  ],
+  "seen": 72
+ },
+ "FABRICATOR_NORMAL": {
+  "kind": "monster",
+  "act": 3,
+  "monsters": [
+   "FABRICATOR",
+   "GUARDBOT",
+   "STABBOT",
+   "ZAPBOT"
+  ],
+  "seen": 2
+ },
+ "FLYCONID_NORMAL": {
+  "kind": "monster",
+  "act": 1,
+  "monsters": [
+   "FLYCONID",
+   "TWIG_SLIME_M"
+  ],
+  "seen": 129
+ },
+ "FOGMOG_NORMAL": {
+  "kind": "monster",
+  "act": 1,
+  "monsters": [
+   "EYE_WITH_TEETH",
+   "FOGMOG"
+  ],
+  "seen": 191
+ },
+ "FROG_KNIGHT_NORMAL": {
+  "kind": "monster",
+  "act": 3,
+  "monsters": [
+   "FROG_KNIGHT",
+   "PAELS_LEGION"
+  ],
+  "seen": 2
+ },
+ "FUZZY_WURM_CRAWLER_WEAK": {
+  "kind": "monster",
+  "act": 1,
+  "monsters": [
+   "FUZZY_WURM_CRAWLER"
+  ],
+  "seen": 613
+ },
+ "GLOBE_HEAD_NORMAL": {
+  "kind": "monster",
+  "act": 3,
+  "monsters": [
+   "GLOBE_HEAD"
+  ],
+  "seen": 2
+ },
+ "HUNTER_KILLER_NORMAL": {
+  "kind": "monster",
+  "act": 2,
+  "monsters": [
+   "HUNTER_KILLER"
+  ],
+  "seen": 48
+ },
+ "INFESTED_PRISMS_ELITE": {
+  "kind": "elite",
+  "act": 2,
+  "monsters": [
+   "INFESTED_PRISM"
+  ],
+  "seen": 42
+ },
+ "INKLETS_NORMAL": {
+  "kind": "monster",
+  "act": 1,
+  "monsters": [
+   "INKLET",
+   "INKLET",
+   "INKLET"
+  ],
+  "seen": 188
+ },
+ "KAISER_CRAB_BOSS": {
+  "kind": "boss",
+  "act": 2,
+  "monsters": [
+   "CRUSHER",
+   "ROCKET"
+  ],
+  "seen": 12
+ },
+ "KNOWLEDGE_DEMON_BOSS": {
+  "kind": "boss",
+  "act": 2,
+  "monsters": [
+   "KNOWLEDGE_DEMON"
+  ],
+  "seen": 20
+ },
+ "LOUSE_PROGENITOR_NORMAL": {
+  "kind": "monster",
+  "act": 2,
+  "monsters": [
+   "LOUSE_PROGENITOR"
+  ],
+  "seen": 44
+ },
+ "MAWLER_NORMAL": {
+  "kind": "monster",
+  "act": 1,
+  "monsters": [
+   "MAWLER"
+  ],
+  "seen": 163
+ },
+ "MECHA_KNIGHT_ELITE": {
+  "kind": "elite",
+  "act": 3,
+  "monsters": [
+   "MECHA_KNIGHT"
+  ],
+  "seen": 1
+ },
+ "MYTES_NORMAL": {
+  "kind": "monster",
+  "act": 2,
+  "monsters": [
+   "MYTE",
+   "MYTE"
+  ],
+  "seen": 36
+ },
+ "NIBBITS_NORMAL": {
+  "kind": "monster",
+  "act": 1,
+  "monsters": [
+   "NIBBIT",
+   "NIBBIT"
+  ],
+  "seen": 156
+ },
+ "NIBBITS_WEAK": {
+  "kind": "monster",
+  "act": 1,
+  "monsters": [
+   "NIBBIT"
+  ],
+  "seen": 591
+ },
+ "OVERGROWTH_CRAWLERS": {
+  "kind": "monster",
+  "act": 1,
+  "monsters": [
+   "FUZZY_WURM_CRAWLER",
+   "SHRINKER_BEETLE"
+  ],
+  "seen": 133
+ },
+ "OVICOPTER_NORMAL": {
+  "kind": "monster",
+  "act": 2,
+  "monsters": [
+   "OVICOPTER",
+   "TOUGH_EGG"
+  ],
+  "seen": 39
+ },
+ "OWL_MAGISTRATE_NORMAL": {
+  "kind": "monster",
+  "act": 3,
+  "monsters": [
+   "OWL_MAGISTRATE"
+  ],
+  "seen": 1
+ },
+ "PHROG_PARASITE_ELITE": {
+  "kind": "elite",
+  "act": 1,
+  "monsters": [
+   "PHROG_PARASITE",
+   "WRIGGLER"
+  ],
+  "seen": 299
+ },
+ "QUEEN_BOSS": {
+  "kind": "boss",
+  "act": 3,
+  "monsters": [
+   "QUEEN",
+   "TORCH_HEAD_AMALGAM"
+  ],
+  "seen": 1
+ },
+ "RUBY_RAIDERS_NORMAL": {
+  "kind": "monster",
+  "act": 1,
+  "monsters": [
+   "ASSASSIN_RUBY_RAIDER",
+   "BRUTE_RUBY_RAIDER",
+   "CROSSBOW_RUBY_RAIDER"
+  ],
+  "seen": 168
+ },
+ "SCROLLS_OF_BITING_WEAK": {
+  "kind": "monster",
+  "act": 3,
+  "monsters": [
+   "SCROLL_OF_BITING",
+   "SCROLL_OF_BITING",
+   "SCROLL_OF_BITING"
+  ],
+  "seen": 7
+ },
+ "SHRINKER_BEETLE_WEAK": {
+  "kind": "monster",
+  "act": 1,
+  "monsters": [
+   "SHRINKER_BEETLE"
+  ],
+  "seen": 586
+ },
+ "SLIMED_BERSERKER_NORMAL": {
+  "kind": "monster",
+  "act": 3,
+  "monsters": [
+   "SLIMED_BERSERKER"
+  ],
+  "seen": 3
+ },
+ "SLIMES_NORMAL": {
+  "kind": "monster",
+  "act": 1,
+  "monsters": [
+   "LEAF_SLIME_M",
+   "LEAF_SLIME_S",
+   "TWIG_SLIME_M",
+   "TWIG_SLIME_S"
+  ],
+  "seen": 154
+ },
+ "SLIMES_WEAK": {
+  "kind": "monster",
+  "act": 1,
+  "monsters": [
+   "LEAF_SLIME_S",
+   "TWIG_SLIME_M",
+   "TWIG_SLIME_S"
+  ],
+  "seen": 622
+ },
+ "SLITHERING_STRANGLER_NORMAL": {
+  "kind": "monster",
+  "act": 1,
+  "monsters": [
+   "SLITHERING_STRANGLER",
+   "SNAPPING_JAXFRUIT"
+  ],
+  "seen": 182
+ },
+ "SLUMBERING_BEETLE_NORMAL": {
+  "kind": "monster",
+  "act": 2,
+  "monsters": [
+   "BOWLBUG_ROCK",
+   "BOWLBUG_SILK",
+   "SLUMBERING_BEETLE"
+  ],
+  "seen": 36
+ },
+ "SNAPPING_JAXFRUIT_NORMAL": {
+  "kind": "monster",
+  "act": 1,
+  "monsters": [
+   "FLYCONID",
+   "SNAPPING_JAXFRUIT"
+  ],
+  "seen": 179
+ },
+ "SOUL_NEXUS_ELITE": {
+  "kind": "elite",
+  "act": 3,
+  "monsters": [
+   "SOUL_NEXUS"
+  ],
+  "seen": 2
+ },
+ "SPINY_TOAD_NORMAL": {
+  "kind": "monster",
+  "act": 2,
+  "monsters": [
+   "SPINY_TOAD"
+  ],
+  "seen": 34
+ },
+ "TEST_SUBJECT_BOSS": {
+  "kind": "boss",
+  "act": 3,
+  "monsters": [
+   "TEST_SUBJECT"
+  ],
+  "seen": 1
+ },
+ "THE_INSATIABLE_BOSS": {
+  "kind": "boss",
+  "act": 2,
+  "monsters": [
+   "THE_INSATIABLE"
+  ],
+  "seen": 34
+ },
+ "THE_KIN_BOSS": {
+  "kind": "boss",
+  "act": 1,
+  "monsters": [
+   "KIN_FOLLOWER",
+   "KIN_FOLLOWER",
+   "KIN_PRIEST"
+  ],
+  "seen": 133
+ },
+ "THE_LOST_AND_FORGOTTEN_NORMAL": {
+  "kind": "monster",
+  "act": 3,
+  "monsters": [
+   "THE_FORGOTTEN",
+   "THE_LOST"
+  ],
+  "seen": 1
+ },
+ "THE_OBSCURA_NORMAL": {
+  "kind": "monster",
+  "act": 2,
+  "monsters": [
+   "PARAFRIGHT",
+   "THE_OBSCURA"
+  ],
+  "seen": 29
+ },
+ "THIEVING_HOPPER_WEAK": {
+  "kind": "monster",
+  "act": 2,
+  "monsters": [
+   "THIEVING_HOPPER"
+  ],
+  "seen": 79
+ },
+ "TUNNELER_WEAK": {
+  "kind": "monster",
+  "act": 2,
+  "monsters": [
+   "TUNNELER"
+  ],
+  "seen": 84
+ },
+ "TURRET_OPERATOR_WEAK": {
+  "kind": "monster",
+  "act": 3,
+  "monsters": [
+   "LIVING_SHIELD",
+   "TURRET_OPERATOR"
+  ],
+  "seen": 1
+ },
+ "VANTOM_BOSS": {
+  "kind": "boss",
+  "act": 1,
+  "monsters": [
+   "VANTOM"
+  ],
+  "seen": 168
+ },
+ "VINE_SHAMBLER_NORMAL": {
+  "kind": "monster",
+  "act": 1,
+  "monsters": [
+   "VINE_SHAMBLER"
+  ],
+  "seen": 168
+ }
+}

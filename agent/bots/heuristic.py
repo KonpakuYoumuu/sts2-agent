@@ -63,11 +63,15 @@ class HeuristicBot(Policy):
         # Planner and node from the last map choice, for the rest-site decision.
         self.route: RoutePlanner | None = None
         self.route_node: dict | None = None
+        # The upgrade screen (Armaments) never reports the picked card, so remember the click.
+        self.upgrade_picked = False
 
     # ---- dispatch ---------------------------------------------------------
 
     def choose(self, state: State, actions: list[Action]) -> Action:
         st = state.get("state_type")
+        if st != "hand_select":
+            self.upgrade_picked = False
         handler: Callable[[State, list[Action]], Action | None] | None
         handler = self._combat if st in COMBAT_TYPES else getattr(self, f"_{st}", None)
         choice = handler(state, actions) if handler else None
@@ -270,7 +274,7 @@ class HeuristicBot(Policy):
     def _hand_select(self, state: State, actions: list[Action]) -> Action | None:
         hs = state["hand_select"]
         confirm = self._of(actions, "combat_confirm_selection")
-        if confirm and hs.get("selected_cards"):
+        if confirm and (hs.get("selected_cards") or self.upgrade_picked):
             return confirm[0]
         cards = {c["index"]: c for c in hs.get("cards", [])}
         picks = self._of(actions, "combat_select_card")
@@ -278,6 +282,8 @@ class HeuristicBot(Policy):
             return confirm[0] if confirm else None
         want_best = "upgrade" in (hs.get("prompt") or "").lower() or hs.get("mode") == "upgrade_select"
         key = lambda a: self.card_value(cards[a["card_index"]])  # noqa: E731
+        if hs.get("mode") == "upgrade_select":
+            self.upgrade_picked = True
         return max(picks, key=key) if want_best else min(picks, key=key)
 
     # ---- rewards ----------------------------------------------------------

@@ -23,6 +23,9 @@ agent/
   learn/model.py        transformer policy/value network
   learn/train.py        behavior cloning
   learn/compare.py      compare bots: floors, HP lost per fight, agreement with the teacher
+  bots/route.py         route planner: map + rest choices by estimated chance of beating the boss
+  arena/scenarios.py    logged fight starts -> arena scenarios (deck, relics, HP, encounter)
+  arena/arena.py        fight arena: set up and play single fights in the headless game
   harness/runner.py     plays full runs: menus, stuck detection, per-decision logging
   harness/run.py        command-line entry point
   harness/supervise.py  unattended headless collection with game relaunch
@@ -54,7 +57,13 @@ data/                   built datasets        models/   trained networks
    Needs Steam running and `steam_appid.txt` (containing `2868840`) in the game folder; close the normal game first. It launches `SlayTheSpire2.exe --headless` with `STS2MCP_FAST=1`. Stops and waits when a Timeline reveal is needed.
 4. Record yourself playing: `python -m agent.harness.record_human` (ends at game over).
 5. Tests: `python -m pytest -q`
-6. Imitation learning:
+6. Fight arena (headless game running; see [docs/05-fight-arena.md](docs/05-fight-arena.md)):
+
+   ```
+   python -m agent.arena.scenarios logs/night_0927 --out data/scenarios_v1.jsonl
+   python -m agent.arena.arena --episodes 50 --bot nn --act 1 --kind boss
+   ```
+7. Imitation learning:
 
    ```
    python -m agent.learn.build_dataset logs/night_0927 --out data/combat_v1

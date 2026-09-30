@@ -1070,6 +1070,7 @@ public static partial class McpMod
             return battle;
         }
 
+        battle["encounter_id"] = combatState.Encounter?.Id.Entry;
         battle["round"] = combatState.RoundNumber;
         battle["turn"] = combatState.CurrentSide.ToString().ToLower();
         battle["is_play_phase"] = IsPlayPhase(combatState);

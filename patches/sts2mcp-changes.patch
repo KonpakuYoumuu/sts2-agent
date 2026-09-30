@@ -1,8 +1,18 @@
 diff --git a/McpMod.Actions.cs b/McpMod.Actions.cs
-index 2553f3f..0528bae 100644
+index 2553f3f..bc44b8d 100644
 --- a/McpMod.Actions.cs
 +++ b/McpMod.Actions.cs
-@@ -665,9 +665,9 @@ public static partial class McpMod
+@@ -87,6 +87,9 @@ public static partial class McpMod
+             "crystal_sphere_set_tool" => ExecuteCrystalSphereSetTool(data),
+             "crystal_sphere_click_cell" => ExecuteCrystalSphereClickCell(data),
+             "crystal_sphere_proceed" => ExecuteCrystalSphereProceed(),
++            "console" => ExecuteConsoleCommand(data),
++            "arena_setup" => ExecuteArenaSetup(player, data),
++            "arena_status" => ExecuteArenaStatus(),
+             _ => Error($"Unknown action: {action}")
+         };
+     }
+@@ -665,9 +668,9 @@ public static partial class McpMod
          if (overlay is not NCardGridSelectionScreen screen)
              return Error("No card selection screen is open");
  
@@ -15,7 +25,7 @@ index 2553f3f..0528bae 100644
          {
              var container = screen.GetNodeOrNull<Godot.Control>(containerName);
              if (container?.Visible == true)
-@@ -743,7 +743,7 @@ public static partial class McpMod
+@@ -743,7 +746,7 @@ public static partial class McpMod
              return Error("No card selection screen is open");
  
          // If preview is showing, cancel back to selection
@@ -45,10 +55,18 @@ index 3eb9b38..0359406 100644
      // PlayerCombatState.Phase, so these helpers rebuild the old semantics: we're in the play
      // phase when combat is running, it's the player side's turn, and the player is in Play.
 diff --git a/McpMod.StateBuilder.cs b/McpMod.StateBuilder.cs
-index 76eee84..f2de308 100644
+index 76eee84..f782304 100644
 --- a/McpMod.StateBuilder.cs
 +++ b/McpMod.StateBuilder.cs
-@@ -1926,20 +1926,16 @@ public static partial class McpMod
+@@ -1070,6 +1070,7 @@ public static partial class McpMod
+             return battle;
+         }
+ 
++        battle["encounter_id"] = combatState.Encounter?.Id.Entry;
+         battle["round"] = combatState.RoundNumber;
+         battle["turn"] = combatState.CurrentSide.ToString().ToLower();
+         battle["is_play_phase"] = IsPlayPhase(combatState);
+@@ -1926,20 +1927,16 @@ public static partial class McpMod
          state["cards"] = cards;
  
          // Preview container showing? (selection complete, awaiting confirm)
@@ -75,7 +93,7 @@ index 76eee84..f2de308 100644
              state["preview_cards"] = previewCards;
          }
  
-@@ -1949,7 +1945,7 @@ public static partial class McpMod
+@@ -1949,7 +1946,7 @@ public static partial class McpMod
          bool canCancel = false;
          if (previewShowing)
          {
@@ -84,7 +102,7 @@ index 76eee84..f2de308 100644
              {
                  if (container?.Visible == true)
                  {
-@@ -1968,7 +1964,7 @@ public static partial class McpMod
+@@ -1968,7 +1965,7 @@ public static partial class McpMod
  
          // Confirm button - search all preview containers and main screen
          bool canConfirm = false;
@@ -160,3 +178,134 @@ index 3b5ed64..12f4e72 100644
      internal static Task<T> RunOnMainThread<T>(Func<T> func)
      {
          var tcs = new TaskCompletionSource<T>();
+diff --git a/McpMod.Arena.cs b/McpMod.Arena.cs
+new file mode 100644
+index 0000000..1483f50
+--- /dev/null
++++ b/McpMod.Arena.cs
+@@ -0,0 +1,125 @@
++using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Text.Json;
++using System.Threading.Tasks;
++using MegaCrit.Sts2.Core.Combat;
++using MegaCrit.Sts2.Core.Commands;
++using MegaCrit.Sts2.Core.DevConsole;
++using MegaCrit.Sts2.Core.Entities.Cards;
++using MegaCrit.Sts2.Core.Entities.Players;
++using MegaCrit.Sts2.Core.Helpers;
++using MegaCrit.Sts2.Core.Models;
++using MegaCrit.Sts2.Core.Runs;
++
++namespace STS2_MCP;
++
++// The "fight arena": lets an agent set up a player (deck, relics, HP) and start
++// any fight directly, using the game's own developer-console commands and model
++// functions, so combat can be trained without playing whole runs.
++public static partial class McpMod
++{
++    private static DevConsole? _devConsole;
++    private static Task? _arenaSetupTask;
++
++    /// <summary>`console {command}`: run a developer-console command, e.g. "fight SHRINKER_BEETLE_WEAK".</summary>
++    private static Dictionary<string, object?> ExecuteConsoleCommand(Dictionary<string, JsonElement> data)
++    {
++        if (!data.TryGetValue("command", out var cmdElem) || cmdElem.ValueKind != JsonValueKind.String)
++            return Error("Missing 'command' (a developer-console command line, e.g. 'fight SHRINKER_BEETLE_WEAK')");
++        _devConsole ??= new DevConsole(shouldAllowDebugCommands: true);
++        var result = _devConsole.ProcessCommand(cmdElem.GetString()!);
++        if (!result.success)
++            return Error(result.msg);
++        return new Dictionary<string, object?> { ["status"] = "ok", ["message"] = result.msg };
++    }
++
++    /// <summary>
++    /// `arena_setup {deck?: [{id, upgrades?}], relics?: [id], max_hp?, hp?}`: replace the deck,
++    /// relics and HP outside combat. Relics are added without their pickup effects (no card
++    /// choices or max-HP gains). Runs asynchronously; poll `arena_status`.
++    /// </summary>
++    private static Dictionary<string, object?> ExecuteArenaSetup(Player player, Dictionary<string, JsonElement> data)
++    {
++        if (CombatManager.Instance.IsInProgress)
++            return Error("arena_setup only works outside combat");
++        if (_arenaSetupTask is { IsCompleted: false })
++            return Error("arena_setup already running");
++
++        List<(CardModel model, int upgrades)>? deck = null;
++        if (data.TryGetValue("deck", out var deckElem))
++        {
++            deck = new();
++            foreach (var c in deckElem.EnumerateArray())
++            {
++                var id = c.GetProperty("id").GetString()!.ToUpperInvariant();
++                var model = ModelDb.AllCards.FirstOrDefault(m => m.Id.Entry == id);
++                if (model == null)
++                    return Error($"Card '{id}' not found");
++                var upgrades = c.TryGetProperty("upgrades", out var u) ? u.GetInt32() : 0;
++                deck.Add((model, upgrades));
++            }
++        }
++        List<RelicModel>? relics = null;
++        if (data.TryGetValue("relics", out var relicsElem))
++        {
++            relics = new();
++            foreach (var r in relicsElem.EnumerateArray())
++            {
++                var id = r.GetString()!.ToUpperInvariant();
++                var model = ModelDb.AllRelics.FirstOrDefault(m => m.Id.Entry == id);
++                if (model == null)
++                    return Error($"Relic '{id}' not found");
++                relics.Add(model);
++            }
++        }
++        int? maxHp = data.TryGetValue("max_hp", out var mh) ? mh.GetInt32() : null;
++        int? hp = data.TryGetValue("hp", out var h) ? h.GetInt32() : null;
++
++        _arenaSetupTask = TaskHelper.RunSafely(ArenaSetupAsync(player, deck, relics, maxHp, hp));
++        return new Dictionary<string, object?> { ["status"] = "ok", ["message"] = "Arena setup started" };
++    }
++
++    private static async Task ArenaSetupAsync(Player player, List<(CardModel model, int upgrades)>? deck,
++                                              List<RelicModel>? relics, int? maxHp, int? hp)
++    {
++        var runState = RunManager.Instance.DebugOnlyGetState()!;
++        if (deck != null)
++        {
++            await CardPileCmd.RemoveFromDeck(player.Deck.Cards.ToList(), showPreview: false);
++            foreach (var (model, upgrades) in deck)
++            {
++                var card = runState.CreateCard(model, player);
++                for (var i = 0; i < upgrades && card.IsUpgradable; i++)
++                {
++                    card.UpgradeInternal();
++                    card.FinalizeUpgradeInternal();
++                }
++                await CardPileCmd.Add(card, PileType.Deck, skipVisuals: true);
++            }
++        }
++        if (relics != null)
++        {
++            foreach (var relic in player.Relics.ToList())
++                player.RemoveRelicInternal(relic, silent: true);
++            foreach (var relic in relics)
++                player.AddRelicInternal(relic.ToMutable(), -1, silent: true);
++        }
++        if (maxHp != null)
++            await CreatureCmd.SetMaxHp(player.Creature, maxHp.Value);
++        if (hp != null)
++            await CreatureCmd.SetCurrentHp(player.Creature, hp.Value);
++    }
++
++    /// <summary>`arena_status`: whether the last arena_setup has finished.</summary>
++    private static Dictionary<string, object?> ExecuteArenaStatus()
++    {
++        var task = _arenaSetupTask;
++        return new Dictionary<string, object?>
++        {
++            ["status"] = "ok",
++            ["setup_done"] = task == null || task.IsCompleted,
++            ["setup_error"] = task?.Exception?.GetBaseException().Message,
++        };
++    }
++}

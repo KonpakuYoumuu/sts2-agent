@@ -213,3 +213,15 @@ def test_rest_before_boss_heals_unless_nearly_full():
                     {"index": 0, "id": "HEAL", "is_enabled": True}, {"index": 1, "id": "SMITH", "is_enabled": True}]}}
         chosen = bot.choose(rest, legal_actions(rest))["index"]
         assert ("HEAL", "SMITH")[chosen] == expected
+
+
+def test_upgrade_screen_picks_once_then_confirms():
+    # The upgrade screen never lists the picked card, and clicking again un-picks it.
+    state = {"state_type": "hand_select", "hand_select": {
+        "mode": "upgrade_select", "prompt": "Confirm Card to Upgrade", "can_confirm": True,
+        "cards": [dict(STRIKE, index=0, name="Strike"), dict(DEFEND, index=1, name="Defend")]}}
+    bot = HeuristicBot(seed=0)
+    assert bot.choose(state, legal_actions(state))["action"] == "combat_select_card"
+    assert bot.choose(state, legal_actions(state))["action"] == "combat_confirm_selection"
+    bot.choose({"state_type": "monster", "battle": {"enemies": []}, "player": {"hand": []}}, [{"action": "end_turn"}])
+    assert bot.choose(state, legal_actions(state))["action"] == "combat_select_card"  # a new screen
