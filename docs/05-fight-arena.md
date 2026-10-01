@@ -39,8 +39,29 @@ python -m agent.arena.arena --episodes 150 --bot heuristic --act 1 --seed 7 --lo
 
 - **Fidelity:** first test, 5 fights. Deck size, upgrades, relics, HP and max HP matched the source scenario exactly in all five. The only difference was +2 HP from Blood Vial ("heal 2 at the start of combat"), which is correct game behaviour.
 - **Speed:** about **4.7 s per fight (~750 fights/hour)** including new runs after deaths. That's about the same per fight as inside full runs; the gain is choosing the fights (e.g. hundreds of boss fights) and comparing bots on identical ones.
+- **Realism of hard fights:** the first paired run showed elites and especially bosses much harder in the arena (14 of 15 Act 1 boss fights lost) than in the real runs the scenarios came from (6 of 15 won). The cause was **potions**, which the scenarios didn't include; the bot saves them for elites and bosses. With potions (scenario field `potions`, set via the console's `potion` command), 40 Act 1 boss scenarios gave **17 wins in the arena and 17 in the real runs**.
 - **Randomness:** the game re-rolls shuffles and enemy moves each time, so the same scenario plays out differently. Comparisons need many fights.
 
 ## Bug found with the arena
 
 The upgrade screen (Armaments: "Confirm Card to Upgrade") never reports the picked card, and clicking again un-picks it. The bot clicked forever. In full runs the stuck detector forced a confirm after 25 repeats, so it went unnoticed: **26,976 logged states** were this loop. The bot now picks once, then confirms.
+
+## Baseline in the arena (150 Act 1 fights, same scenarios for both bots; before the potion fix)
+
+| | Rule-based bot | Imitation network (v2) |
+|---|---|---|
+| HP lost, normal fights (98) | 7.0 | 7.2 (diff +0.2 ± 2.0) |
+| HP lost, elites (37) | 36.9 | 38.5 (+1.6 ± 4.9) |
+| HP lost, bosses (15) | 55.7 | 55.5 (−0.2 ± 2.2) |
+| Deaths | 24 | 26 |
+
+The two play equally well, as the live runs showed. To be redone with potions as the official baseline for RL.
+
+## RL training (started 2026-09-30)
+
+[agent/learn/ppo.py](../agent/learn/ppo.py): PPO from `models/combat_bc_v2`.
+- **Fights:** Act 1 scenarios, 40% normal fights, 30% elites, 30% bosses.
+- **Reward:** HP fraction left at the end of the fight, −0.5 for dying, −0.05 per potion used.
+- **Value baseline:** the network's fight-outcome head.
+- **Anchoring:** a KL penalty (0.1) keeps the policy close to the imitation network.
+- **Run:** `python -m agent.learn.ppo --init models/combat_bc_v2 --out models/combat_ppo_v1 --iterations 60 --fights 40`. 60 rounds of 40 fights, about 5.5 minutes per round.
