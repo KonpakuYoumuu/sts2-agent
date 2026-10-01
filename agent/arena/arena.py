@@ -168,6 +168,7 @@ def main() -> int:
     ap.add_argument("--kind", default=None, help="only monster / elite / boss fights")
     ap.add_argument("--act", type=int, default=None)
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--model", type=Path, default=None, help="network for --bot nn (default: models/combat_bc_v2)")
     ap.add_argument("--log-dir", type=Path, default=Path("logs/arena"))
     args = ap.parse_args()
 
@@ -178,7 +179,11 @@ def main() -> int:
     if not client.ping():
         print("Can't reach the STS2MCP mod. Start the game (headless is fine) first.")
         return 1
-    policy = BOTS[args.bot](seed=args.seed)
+    if args.bot == "nn" and args.model:
+        from agent.bots.nn_bot import NNBot
+        policy = NNBot(args.model, seed=args.seed)
+    else:
+        policy = BOTS[args.bot](seed=args.seed)
     arena = Arena(client, policy)
     args.log_dir.mkdir(parents=True, exist_ok=True)
     results = []

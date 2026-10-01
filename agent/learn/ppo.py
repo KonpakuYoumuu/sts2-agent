@@ -137,6 +137,8 @@ def main() -> int:
     ap.add_argument("--fights", type=int, default=40, help="fights per iteration")
     ap.add_argument("--lr", type=float, default=3e-5)
     ap.add_argument("--kl", type=float, default=0.1)
+    ap.add_argument("--mix", default="monster=0.4,elite=0.3,boss=0.3",
+                    help="share of fights per kind (elites and bosses decide most runs)")
     ap.add_argument("--seed", type=int, default=0)
     args = ap.parse_args()
 
@@ -155,6 +157,9 @@ def main() -> int:
     args.out.mkdir(parents=True, exist_ok=True)
     vocab.save(args.out / "vocab.json")
     scenarios = [s for s in load_scenarios(args.scenarios) if s["act"] == args.act]
+    by_kind = {k: [s for s in scenarios if s["kind"] == k] for k in ("monster", "elite", "boss")}
+    mix = {k: float(v) for k, v in (part.split("=") for part in args.mix.split(","))}
+    kinds, weights = zip(*[(k, w) for k, w in mix.items() if by_kind.get(k)])
     rng = random.Random(args.seed)
     client = GameClient()
     if not client.ping():
@@ -168,7 +173,7 @@ def main() -> int:
             t0 = time.monotonic()
             batch, results = [], []
             for _ in range(args.fights):
-                sc = rng.choice(scenarios)
+                sc = rng.choice(by_kind[rng.choices(kinds, weights)[0]])
                 policy.steps = []
                 try:
                     r = arena.play_fight(sc, policy)
