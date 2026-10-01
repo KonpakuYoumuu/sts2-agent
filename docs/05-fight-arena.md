@@ -65,3 +65,25 @@ The two play equally well, as the live runs showed. To be redone with potions as
 - **Value baseline:** the network's fight-outcome head.
 - **Anchoring:** a KL penalty (0.1) keeps the policy close to the imitation network.
 - **Run:** `python -m agent.learn.ppo --init models/combat_bc_v2 --out models/combat_ppo_v1 --iterations 60 --fights 40`. 60 rounds of 40 fights, about 6 minutes per round. Resume after an interruption with `--init models/combat_ppo_v1 --ref models/combat_bc_v2` (same `--out`); long runs are started as a detached process (`Start-Process`) so they outlive the terminal.
+
+### Result of the first RL run (`models/combat_ppo_v1`, finished 2026-10-01)
+
+2,400 training fights. The game slowed down and hung after ~3.5 hours of continuous use. Training now restarts it every 10 rounds and recovers from hangs.
+
+**Training trend, flat:** HP lost per training fight was 26.6 in rounds 1–10 and 29.4 in rounds 51–60. Distance from the imitation network (KL) only reached 0.06, so the policy barely changed.
+
+**Paired comparison, 150 Act 1 fights with potions** (`python -m agent.arena.compare_bots`; `logs/arena_compare_1001/summary.md`):
+
+| Fights | Rule-based | Imitation (v2) | PPO v1 |
+|---|---|---|---|
+| Normal (98): HP lost / deaths | 6.9 / 2 | 6.2 / 4 | 7.4 / 3 |
+| Elite (37) | 29.6 / 3 | 35.6 / 10 | 32.7 / 8 |
+| Boss (15) | 53.2 / 10 | 53.9 / 13 | 53.0 / 12 |
+| All (150) | 17.1 / 15 | 18.2 / 27 | 18.2 / 23 |
+
+**No improvement from RL.** PPO v1 is within noise of the imitation network. Both networks die more often than the rule-based bot, especially against elites (3 deaths vs 10 and 8). Likely reasons:
+- The reward comes only once, at the end of a fight. A fight's outcome depends far more on card draws than on any one decision, so the learning signal is very noisy.
+- 2,400 fights is a small budget for this.
+- The KL anchor and small learning rate kept updates tiny.
+
+Next: per-turn rewards (HP lost and enemy damage dealt each turn) with GAE, which gives much less noisy credit for each decision, and a larger step size.
