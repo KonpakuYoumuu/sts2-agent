@@ -130,6 +130,8 @@ def ppo_update(model: CombatNet, ref: CombatNet, steps: list[dict], opt, device:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--init", type=Path, default=Path("models/combat_bc_v2"))
+    ap.add_argument("--ref", type=Path, default=Path("models/combat_bc_v2"),
+                    help="imitation network the KL penalty anchors to")
     ap.add_argument("--out", type=Path, default=Path("models/combat_ppo_v1"))
     ap.add_argument("--scenarios", type=Path, default=Path("data/scenarios_v1.jsonl"))
     ap.add_argument("--act", type=int, default=1)
@@ -148,7 +150,9 @@ def main() -> int:
     model = CombatNet(cfg["sizes"], cfg["d"], cfg["layers"], cfg["heads"]).to(device)
     model.load_state_dict(ckpt["state_dict"])
     model.eval()
-    ref = copy.deepcopy(model).eval()
+    ref = copy.deepcopy(model)
+    ref.load_state_dict(torch.load(args.ref / "model.pt", map_location=device)["state_dict"])
+    ref.eval()
     for p in ref.parameters():
         p.requires_grad_(False)
     vocab = Vocab.load(args.init / "vocab.json")
@@ -167,9 +171,12 @@ def main() -> int:
         return 1
     policy = SamplingPolicy(model, vocab, device, seed=args.seed)
     arena = Arena(client, HeuristicBot(seed=args.seed))
-    history = []
+    # Resuming (--init pointing at a PPO checkpoint): continue its iteration count and history.
+    start = ckpt.get("iteration", 0) + 1
+    history_file = args.out / "history.json"
+    history = json.loads(history_file.read_text()) if start > 1 and history_file.exists() else []
     with gzip.open(args.out / "fights.jsonl.gz", "at", encoding="utf-8") as fight_log:
-        for it in range(1, args.iterations + 1):
+        for it in range(start, args.iterations + 1):
             t0 = time.monotonic()
             batch, results = [], []
             for _ in range(args.fights):
@@ -203,7 +210,8 @@ def main() -> int:
             history.append(summary)
             print(json.dumps(summary), flush=True)
             torch.save({"state_dict": model.state_dict(), "config": cfg, "iteration": it}, args.out / "model.pt")
-            (args.out / "history.json").write_text(json.dumps(history, indent=1))
+            history_file.write_text(json.dumps(history, indent=1))
+            fight_log.flush()
     return 0
 
 

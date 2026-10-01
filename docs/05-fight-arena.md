@@ -64,4 +64,4 @@ The two play equally well, as the live runs showed. To be redone with potions as
 - **Reward:** HP fraction left at the end of the fight, −0.5 for dying, −0.05 per potion used.
 - **Value baseline:** the network's fight-outcome head.
 - **Anchoring:** a KL penalty (0.1) keeps the policy close to the imitation network.
-- **Run:** `python -m agent.learn.ppo --init models/combat_bc_v2 --out models/combat_ppo_v1 --iterations 60 --fights 40`. 60 rounds of 40 fights, about 5.5 minutes per round.
+- **Run:** `python -m agent.learn.ppo --init models/combat_bc_v2 --out models/combat_ppo_v1 --iterations 60 --fights 40`. 60 rounds of 40 fights, about 6 minutes per round. Resume after an interruption with `--init models/combat_ppo_v1 --ref models/combat_bc_v2` (same `--out`); long runs are started as a detached process (`Start-Process`) so they outlive the terminal.
