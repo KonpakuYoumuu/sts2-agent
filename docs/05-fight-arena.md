@@ -87,3 +87,18 @@ The two play equally well, as the live runs showed. To be redone with potions as
 - The KL anchor and small learning rate kept updates tiny.
 
 Next: per-turn rewards (HP lost and enemy damage dealt each turn) with GAE, which gives much less noisy credit for each decision, and a larger step size.
+
+## RL run 2: per-move rewards (started 2026-10-01 14:15)
+
+Changes from run 1 ([agent/learn/ppo.py](../agent/learn/ppo.py)):
+
+- **Reward per move**, not per fight:
+  - +0.3 × the share of total enemy HP removed (potential-based shaping, so it doesn't change what's optimal);
+  - − the share of own max HP lost;
+  - −0.05 per potion used;
+  - −0.5 on death.
+- **Credit:** GAE (γ = 1, λ = 0.95) against the network's value output, now read as "reward still to come".
+- **Value warm-up:** the first 5 rounds train only the value output's own layers, so its early errors can't move the policy.
+- **Looser anchoring:** learning rate 1e-4 (was 3e-5), KL penalty 0.02 (was 0.1).
+- **Scale:** 150 rounds × 40 fights = 6,000 fights, about 12 hours, with a game restart every 10 rounds. Snapshots in `models/combat_ppo_v2/itNNN/` every 25 rounds.
+- **Evaluation:** a paired comparison on the same 150 fights is queued to run afterwards (`logs/arena_compare_ppo2/summary.md`).
