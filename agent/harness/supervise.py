@@ -51,6 +51,14 @@ def wait_for_api(timeout: float = 120) -> bool:
     return False
 
 
+def restart_game(game_dir: Path, log_dir: Path) -> bool:
+    """Kill the game (if any) and start a fresh headless one; True once its API is up."""
+    subprocess.run(["taskkill", "/F", "/IM", "SlayTheSpire2.exe"], capture_output=True)
+    time.sleep(5)
+    launch_game(game_dir, log_dir)
+    return wait_for_api()
+
+
 def logged_runs(log_dir: Path) -> list[dict]:
     path = log_dir / "summary.jsonl"
     if not path.exists():

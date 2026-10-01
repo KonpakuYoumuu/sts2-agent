@@ -1,0 +1,1 @@
+{"iteration": 24, "fights": 40, "decisions": 1124, "mean_return": 0.2103, "hp_lost": 31.35, "deaths": 13, "seconds": 304.8, "policy": -0.0092, "value": 0.0764, "kl_ref": 0.0485, "entropy": 0.2246, "clipfrac": 0.0514}

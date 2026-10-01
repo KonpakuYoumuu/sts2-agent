@@ -34,7 +34,8 @@ from agent.arena.arena import Arena, ArenaError, load_scenarios
 from agent.bots.base import Policy
 from agent.bots.heuristic import HeuristicBot
 from agent.interface.actions import Action
-from agent.interface.client import COMBAT_TYPES, GameClient, State
+from agent.harness.supervise import DEFAULT_GAME_DIR, restart_game
+from agent.interface.client import COMBAT_TYPES, GameClient, GameNotRunning, State, StateTimeout
 from agent.learn.features import KIND_POTION, Vocab, encode_actions, encode_state
 from agent.learn.model import CombatNet, collate
 
@@ -141,6 +142,8 @@ def main() -> int:
     ap.add_argument("--kl", type=float, default=0.1)
     ap.add_argument("--mix", default="monster=0.4,elite=0.3,boss=0.3",
                     help="share of fights per kind (elites and bosses decide most runs)")
+    ap.add_argument("--restart-every", type=int, default=10,
+                    help="restart the headless game every N iterations (it slows down after a few hours)")
     ap.add_argument("--seed", type=int, default=0)
     args = ap.parse_args()
 
@@ -176,7 +179,14 @@ def main() -> int:
     history_file = args.out / "history.json"
     history = json.loads(history_file.read_text()) if start > 1 and history_file.exists() else []
     with gzip.open(args.out / "fights.jsonl.gz", "at", encoding="utf-8") as fight_log:
+        def fresh_game(reason: str) -> None:
+            print(f"  restarting the game ({reason})", flush=True)
+            if not restart_game(DEFAULT_GAME_DIR, args.out / "game"):
+                raise SystemExit("The game didn't come back up; stopping.")
+
         for it in range(start, args.iterations + 1):
+            if it > start and (it - 1) % args.restart_every == 0:
+                fresh_game("scheduled")
             t0 = time.monotonic()
             batch, results = [], []
             for _ in range(args.fights):
@@ -186,6 +196,10 @@ def main() -> int:
                     r = arena.play_fight(sc, policy)
                 except ArenaError as e:
                     print(f"  skipped {sc['encounter']}: {e}", flush=True)
+                    continue
+                except (GameNotRunning, StateTimeout) as e:
+                    print(f"  game not responding during {sc['encounter']}: {e}", flush=True)
+                    fresh_game("not responding")
                     continue
                 if not policy.steps:
                     continue
