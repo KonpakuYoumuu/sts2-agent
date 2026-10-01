@@ -100,10 +100,19 @@ class Arena:
             time.sleep(self.client.poll_interval)
         raise ArenaError("arena_setup timed out")
 
+    def set_potions(self, potions: list[str]) -> None:
+        """Replace the potion belt (the console's `potion` command adds one)."""
+        belt = (self.client.get_state().get("player") or {}).get("potions", [])
+        for p in sorted(belt, key=lambda p: -p["slot"]):
+            self._act({"action": "discard_potion", "slot": p["slot"]})
+        for pid in potions:
+            self._act({"action": "console", "command": f"potion {pid}"})
+
     def play_fight(self, scenario: dict, policy: Policy, log=None) -> FightResult:
         t0 = time.monotonic()
         self.ensure_in_run()
         self.setup(scenario)
+        self.set_potions(scenario.get("potions", []))
         self._act({"action": "console", "command": f"fight {scenario['encounter']}"})
         state = self._wait_until(lambda s: s.get("state_type") in COMBAT_TYPES)
         state = self.client.wait_for_input(timeout=60)

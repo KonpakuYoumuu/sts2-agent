@@ -1,7 +1,7 @@
 """Fight scenarios for the arena, taken from real logged fights.
 
 A scenario is the player's situation at the start of a fight: the deck (with
-upgrades), relics, HP, and which encounter it was. Replaying real situations
+upgrades), relics, potions, HP, and which encounter it was. Replaying real situations
 keeps arena training close to what the agent meets in actual runs.
 
     python -m agent.arena.scenarios logs/night_0927 logs/eval_route_0927 --out data/scenarios_v1.jsonl
@@ -85,6 +85,7 @@ class ScenarioBuilder:
         return {
             "encounter": enc, "kind": info["kind"], "act": info["act"],
             "deck": deck, "relics": [r["id"] for r in player.get("relics", [])],
+            "potions": [q["id"] for q in player.get("potions", []) if q.get("id")],
             "hp": player.get("hp"), "max_hp": player.get("max_hp"),
             "floor": (state.get("run") or {}).get("floor"), "source": source,
         }
