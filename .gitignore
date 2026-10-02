@@ -15,3 +15,7 @@ __pycache__/
 external/STS2MCP/obj/
 external/STS2MCP/out/
 external/STS2MCP/bin/
+
+# Game and error logs written during training (machine-specific; contain the Steam ID)
+/models/*/game/
+/models/*/*.err
