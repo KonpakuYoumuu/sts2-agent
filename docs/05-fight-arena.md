@@ -103,7 +103,7 @@ Changes from run 1 ([agent/learn/ppo.py](../agent/learn/ppo.py)):
 - **Scale:** 150 rounds × 40 fights = 6,000 fights, about 12 hours, with a game restart every 10 rounds. Snapshots in `models/combat_ppo_v2/itNNN/` every 25 rounds.
 - **Evaluation:** a paired comparison on the same 150 fights is queued to run afterwards (`logs/arena_compare_ppo2/summary.md`).
 
-**Paused 2026-10-01 ~20:00 at round 71 of 150** (checkpoint `models/combat_ppo_v2/model.pt`, snapshots `it025`, `it050`). So far no improvement in training fights: HP lost per fight was 27.4 in rounds 1–25, 28.7 in rounds 26–50 and 27.1 in rounds 51–71, with deaths at 27–29% throughout. The policy did move away from the imitation network (KL ≈ 0.4, against 0.06 in run 1), so it's learning something, but not winning fights more efficiently.
+**Paused 2026-10-01 21:35 at round 91 of 150** (checkpoint `models/combat_ppo_v2/model.pt`, snapshots `it025`, `it050`, `it075`). So far no improvement in training fights: HP lost per fight was 27.4 in rounds 1–25, 28.7 in rounds 26–50, 27.2 in rounds 51–75 and 28.5 in rounds 76–91, with deaths at 27–29% throughout. The policy did move away from the imitation network (KL ≈ 0.4, against 0.06 in run 1), so it's learning something, but not winning fights more efficiently.
 
 To resume (headless game running), then compare:
 
