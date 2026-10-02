@@ -102,3 +102,14 @@ Changes from run 1 ([agent/learn/ppo.py](../agent/learn/ppo.py)):
 - **Looser anchoring:** learning rate 1e-4 (was 3e-5), KL penalty 0.02 (was 0.1).
 - **Scale:** 150 rounds × 40 fights = 6,000 fights, about 12 hours, with a game restart every 10 rounds. Snapshots in `models/combat_ppo_v2/itNNN/` every 25 rounds.
 - **Evaluation:** a paired comparison on the same 150 fights is queued to run afterwards (`logs/arena_compare_ppo2/summary.md`).
+
+**Paused 2026-10-01 ~20:00 at round 71 of 150** (checkpoint `models/combat_ppo_v2/model.pt`, snapshots `it025`, `it050`). So far no improvement in training fights: HP lost per fight was 27.4 in rounds 1–25, 28.7 in rounds 26–50 and 27.1 in rounds 51–71, with deaths at 27–29% throughout. The policy did move away from the imitation network (KL ≈ 0.4, against 0.06 in run 1), so it's learning something, but not winning fights more efficiently.
+
+To resume (headless game running), then compare:
+
+```
+python -m agent.learn.ppo --init models/combat_ppo_v2 --ref models/combat_bc_v2 --out models/combat_ppo_v2 --iterations 150 --fights 40
+python -m agent.arena.compare_bots --episodes 150 --seed 7 --out logs/arena_compare_ppo2 --bot heuristic --bot nn=models/combat_bc_v2 --bot nn=models/combat_ppo_v2
+```
+
+Start both with PowerShell `Start-Process` so they outlive the terminal.
