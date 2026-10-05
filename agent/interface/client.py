@@ -139,6 +139,11 @@ def is_settled(state: State) -> bool:
         battle = state.get("battle") or {}
         if not battle.get("is_play_phase") or battle.get("turn") != "player":
             return False
+        # is_play_phase turns true while the last move or the turn's end is still resolving;
+        # deciding then acts on a stale state (e.g. a second end_turn lands in the next round).
+        # Older mod builds don't report these fields.
+        if battle.get("actions_idle") is False or battle.get("player_actions_disabled") is True:
+            return False
         enemies = battle.get("enemies", [])
         # Between the last enemy dying and the rewards screen there is no input...
         if enemies and not any(e.get("hp", 0) > 0 for e in enemies):

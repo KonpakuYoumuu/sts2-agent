@@ -43,6 +43,12 @@ def test_combat_settled_only_in_player_play_phase():
     assert not is_settled(combat_state(enemies=dead))
 
 
+def test_combat_not_settled_while_actions_resolve():
+    assert is_settled(combat_state(actions_idle=True, player_actions_disabled=False))
+    assert not is_settled(combat_state(actions_idle=False))
+    assert not is_settled(combat_state(player_actions_disabled=True))
+
+
 def test_event_dialogue_then_unlocked_options():
     state = {"state_type": "event", "event": {"in_dialogue": True, "options": []}}
     assert legal_actions(state) == [{"action": "advance_dialogue"}]

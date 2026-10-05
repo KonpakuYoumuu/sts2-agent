@@ -1078,6 +1078,11 @@ public static partial class McpMod
         battle["round"] = combatState.RoundNumber;
         battle["turn"] = combatState.CurrentSide.ToString().ToLower();
         battle["is_play_phase"] = IsPlayPhase(combatState);
+        // is_play_phase turns true while the previous move (or the end of the turn) is still
+        // resolving; a client deciding then acts on a stale state. Ready = nothing queued or running.
+        battle["actions_idle"] = RunManager.Instance.ActionQueueSet.IsEmpty
+                                 && !RunManager.Instance.ActionExecutor.IsRunning;
+        battle["player_actions_disabled"] = CombatManager.Instance.PlayerActionsDisabled;
 
         // Enemies
         var enemies = new List<Dictionary<string, object?>>();
