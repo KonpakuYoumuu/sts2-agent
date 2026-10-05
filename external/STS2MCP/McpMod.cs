@@ -97,11 +97,19 @@ public static partial class McpMod
             // Simulation speed: STS2MCP_FAST=1 runs the game like the developers' AutoSlay
             // bot does (no waits, sound or music; actions execute without frame delays),
             // and forces Instant mode, which release builds downgrade to Fast at startup.
-            if (System.Environment.GetEnvironmentVariable("STS2MCP_FAST") == "1")
+            // STS2MCP_FAST=2 forces Instant mode only: mods that step aside while the game's
+            // AutoSlay bot runs (e.g. AutoSTS2) keep playing.
+            var fast = System.Environment.GetEnvironmentVariable("STS2MCP_FAST");
+            if (fast == "1")
             {
                 _fastMode = true;
                 MegaCrit.Sts2.Core.Helpers.NonInteractiveMode.AutoSlayerCheck = () => true;
                 GD.Print("[STS2 MCP] Fast mode: NonInteractiveMode on, Instant mode forced");
+            }
+            else if (fast == "2")
+            {
+                _fastMode = true;
+                GD.Print("[STS2 MCP] Fast mode: Instant mode forced (NonInteractiveMode off)");
             }
 
             _listener = new HttpListener();

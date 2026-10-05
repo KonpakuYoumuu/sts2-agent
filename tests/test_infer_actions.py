@@ -1,4 +1,4 @@
-from agent.learn.infer_actions import label_records
+from agent.learn.infer_actions import label_records, merge_move_log, split_runs
 
 
 def card(i, cid, target="None", up=False):
@@ -62,3 +62,26 @@ def test_potion_use():
     recs = [fight([DEFEND], [enemy("A", 20)], potions=[potion]),
             fight([DEFEND], [enemy("A", 20)])]
     assert actions(recs)[0] == {"action": "use_potion", "slot": 1}
+
+
+def test_move_log_merges_with_recorded_screens_by_time():
+    play = {"action": "play_card", "card_index": 0}
+    moves = [{"t": 10.0, "state": fight([STRIKE], [enemy("A", 20)])["state"], "action": play},
+             {"t": 11.0, "state": fight([], [enemy("A", 14)])["state"], "action": {"action": "end_turn"}}]
+    recorded = [{"ts": 9.0, "state": {"state_type": "map"}},
+                {"ts": 10.5, "state": fight([], [enemy("A", 14)])["state"]},  # recorded fight state: dropped
+                {"ts": 12.0, "state": {"state_type": "rewards", "player": {"hp": 50, "max_hp": 80}}},
+                {"ts": 20.0, "state": {"state_type": "game_over"}},
+                {"ts": 30.0, "state": {"state_type": "map"}}]
+    timeline = merge_move_log(moves, recorded)
+    assert [r["state"]["state_type"] for r in timeline] == ["map", "monster", "monster", "rewards", "game_over", "map"]
+    assert timeline[1]["action"] == play
+    assert len(split_runs(timeline)) == 1  # the trailing map has no fights yet
+
+
+def test_new_run_without_game_over_is_split_by_floor():
+    def at(floor, st="map"):
+        return {"state": {"state_type": st, "run": {"floor": floor}, "player": {"hand": []},
+                          "battle": {"round": 1, "enemies": []}}}
+    runs = split_runs([at(40, "monster"), at(41), at(1), at(2, "monster")])
+    assert [[r["state"]["run"]["floor"] for r in run] for run in runs] == [[40, 41], [1, 2]]

@@ -16,6 +16,12 @@ Output: one run log per recorded run, in the runner's format, so
 build_dataset reads it unchanged.
 
     python -m agent.learn.infer_actions logs/autosts2 --out logs/autosts2_labeled
+
+With --moves, combat moves come instead from the mod's exact move log
+(moves_*.jsonl, written when the game runs with STS2MCP_MOVE_LOG), and the
+recordings only supply what happens between fights (rewards, game over, so
+fight outcomes are known). Records are merged by wall-clock time. This is the
+mode to use at Instant game speed, where consecutive states skip moves.
 """
 
 from __future__ import annotations
@@ -148,35 +154,87 @@ def label_records(records: list[dict]) -> tuple[list[dict], Counter]:
 
 
 def split_runs(records: list[dict]) -> list[list[dict]]:
-    """A recording can hold several runs (looped recording, or appended files)."""
+    """A recording can hold several runs (looped recording, or appended files).
+
+    Runs end at a game-over screen, or where the floor number goes back down (a
+    new run without a recorded game over; its last fight's outcome stays unknown).
+    """
     runs, cur = [], []
+    last_floor = None
+
+    def close() -> None:
+        if any(r["state"].get("state_type") in COMBAT_TYPES for r in cur):
+            runs.append(cur)  # unfinished runs too: their fights are still usable
+
     for rec in records:
+        floor = (rec["state"].get("run") or {}).get("floor")
+        if floor is not None and last_floor is not None and floor < last_floor:
+            close()
+            cur = []
+        if floor is not None:
+            last_floor = floor
         cur.append(rec)
         if rec["state"].get("state_type") == "game_over":
             runs.append(cur)
-            cur = []
-    if any(r["state"].get("state_type") in COMBAT_TYPES for r in cur):
-        runs.append(cur)  # unfinished run: its fights are still usable
+            cur, last_floor = [], None
+    close()
     return runs
+
+
+def read_jsonl(path: str | Path) -> list[dict]:
+    """All complete lines of a (possibly gzipped) JSONL file; a file still being written is fine."""
+    opener = gzip.open if str(path).endswith(".gz") else open
+    out = []
+    try:
+        with opener(path, "rt", encoding="utf-8") as f:
+            for line in f:
+                out.append(json.loads(line))
+    except (EOFError, OSError, json.JSONDecodeError):
+        pass  # truncated tail
+    return out
+
+
+def merge_move_log(move_records: list[dict], recorded: list[dict]) -> list[dict]:
+    """One timeline: the mod's logged combat moves, plus recorded states outside fights."""
+    timeline = [{"ts": m["t"], "state": m["state"], "action": m["action"], "logged": True}
+                for m in move_records]
+    timeline += [{"ts": r["ts"], "state": r["state"]} for r in recorded
+                 if "ts" in r and r["state"].get("state_type") not in FIGHT_TYPES]
+    return sorted(timeline, key=lambda r: r["ts"])
+
+
+def _write_run(path: Path, records: list[dict]) -> None:
+    with gzip.open(path, "wt", encoding="utf-8") as f:
+        for rec in records:
+            f.write(json.dumps(rec) + "\n")
 
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("recording_dir")
     ap.add_argument("--out", required=True)
+    ap.add_argument("--moves", action="store_true", help="use the mod's move log (moves_*.jsonl) for combat")
     args = ap.parse_args()
-    out = Path(args.out)
+    src, out = Path(args.recording_dir), Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    total: Counter = Counter()
+    recordings = sorted(glob.glob(str(src / "*.jsonl.gz")))
     n = 0
-    for path in sorted(glob.glob(str(Path(args.recording_dir) / "*.jsonl.gz"))):
-        records = [json.loads(line) for line in gzip.open(path, "rt", encoding="utf-8")]
-        for run in split_runs(records):
+    if args.moves:
+        moves = [m for p in sorted(glob.glob(str(src / "moves_*.jsonl"))) for m in read_jsonl(p)]
+        recorded = [r for p in recordings for r in read_jsonl(p)]
+        counts = Counter(m["action"]["action"] for m in moves)
+        for run in split_runs(merge_move_log(moves, recorded)):
+            _write_run(out / f"run_{n:04d}.jsonl.gz", run)
+            n += 1
+        print(f"{n} runs written to {out}")
+        print(json.dumps(dict(counts.most_common()), indent=1))
+        return
+    total: Counter = Counter()
+    for path in recordings:
+        for run in split_runs(read_jsonl(path)):
             labeled, stats = label_records(run)
             total += stats
-            with gzip.open(out / f"run_{n:04d}.jsonl.gz", "wt", encoding="utf-8") as f:
-                for rec in labeled:
-                    f.write(json.dumps(rec) + "\n")
+            _write_run(out / f"run_{n:04d}.jsonl.gz", labeled)
             n += 1
     print(f"{n} runs written to {out}")
     print(json.dumps(dict(total.most_common()), indent=1))
