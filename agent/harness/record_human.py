@@ -15,15 +15,39 @@ leaving the human time to close the inventory and leave.
 from __future__ import annotations
 
 import argparse
+import glob
 import gzip
 import json
+import os
 import time
 from pathlib import Path
 
 from agent.bots.heuristic import HeuristicBot
 from agent.harness.runner import Runner, StuckError, fingerprint
 from agent.interface.actions import legal_actions
-from agent.interface.client import GameClient, GameNotRunning, StateTimeout, is_settled, is_victory_event
+from agent.interface.client import (COMBAT_TYPES, GameClient, GameNotRunning, StateTimeout, is_settled,
+                                    is_victory_event)
+
+
+HISTORY_GLOB = str(Path(os.environ.get("APPDATA", "")) / "SlayTheSpire2" / "steam" / "*" / "*" / "profile*"
+                   / "saves" / "history" / "*.run")
+
+
+def _history_result(since: float, wait: float = 5.0) -> dict | None:
+    """The newest run in the game's history written after `since`: win flag, game time, cause."""
+    deadline = time.time() + wait
+    while True:
+        files = [f for f in glob.glob(HISTORY_GLOB) if os.path.getmtime(f) >= since]
+        if files:
+            try:
+                d = json.loads(Path(max(files, key=os.path.getmtime)).read_text(encoding="utf-8"))
+                return {"win": bool(d.get("win")), "run_time": d.get("run_time"), "seed": d.get("seed"),
+                        "killed_by": d.get("killed_by_encounter"), "abandoned": d.get("was_abandoned")}
+            except (OSError, ValueError):
+                pass  # still being written
+        if time.time() > deadline:
+            return None
+        time.sleep(0.5)
 
 
 def _wait_for_game(client: GameClient) -> None:
@@ -41,7 +65,9 @@ def record_run(client: GameClient, path: Path, args: argparse.Namespace, starter
     played by whoever plays it.
     """
     t0 = time.monotonic()
+    started_at = time.time()
     changed_at = t0
+    refreshed = False
     map_bot = HeuristicBot(seed=0)
     last_fp = None
     n = 0
@@ -81,30 +107,48 @@ def record_run(client: GameClient, path: Path, args: argparse.Namespace, starter
                     log.flush()
                     last_fp = fp
                     changed_at = time.monotonic()
+                    refreshed = False
                     n += 1
                     if n % 25 == 0:
                         run = state.get("run") or {}
                         print(f"  {n} states  act {run.get('act')} floor {run.get('floor')}  [{st}]", flush=True)
-                elif (args.nudge_map and st == "map" and starter is not None
-                      and time.monotonic() - changed_at > args.nudge_map):
-                    # AutoSTS2 sometimes misses the map opening (after events); move on for it.
-                    action = map_bot.choose(state, legal_actions(state))
-                    res = client.act(action)
-                    print(f"Map unchanged for {args.nudge_map:.0f} s; chose {action} ourselves: {res.message}",
-                          flush=True)
-                    log.write(json.dumps({"t": round(time.monotonic() - t0, 3), "ts": round(time.time(), 3),
-                                          "state": state, "map_nudge": action}) + "\n")
-                    log.flush()
-                    changed_at = time.monotonic()
+                elif starter is not None:
+                    # The playing mod sometimes stalls: AutoSTS2 misses the map opening after
+                    # some events; the solver can wait for a human. A stalled map first gets
+                    # map_refresh, which re-fires AutoSTS2's travel hook so it picks its own
+                    # route; only if that fails, or in a stalled fight, do we make the move.
+                    stalled = time.monotonic() - changed_at
+                    if st == "map" and args.nudge_map and stalled > args.nudge_map and not refreshed:
+                        res = client.act({"action": "map_refresh"})
+                        print(f"Map unchanged for {args.nudge_map:.0f} s; map_refresh: {res.message}", flush=True)
+                        log.write(json.dumps({"t": round(time.monotonic() - t0, 3), "ts": round(time.time(), 3),
+                                              "state": state, "map_refresh": True}) + "\n")
+                        log.flush()
+                        refreshed = True
+                        continue
+                    limit = 2 * args.nudge_map if st == "map" else args.nudge_fight if st in COMBAT_TYPES else 0
+                    if limit and stalled > limit:
+                        action = map_bot.choose(state, legal_actions(state))
+                        res = client.act(action)
+                        print(f"'{st}' unchanged for {limit:.0f} s; made move {action} ourselves: {res.message}",
+                              flush=True)
+                        log.write(json.dumps({"t": round(time.monotonic() - t0, 3), "ts": round(time.time(), 3),
+                                              "state": state, "nudge": action}) + "\n")
+                        log.flush()
+                        changed_at = time.monotonic()
             if st == "game_over" and in_run:
+                # The game-over screen shows 0 HP after a win too, and the final event is
+                # often clicked through between two polls: the game's run history decides.
+                result = _history_result(started_at)
+                won = result["win"] if result else reached_ending
+                outcome = "victory" if won else "death"
                 # Always kept: it ends the run and tells the last fight's outcome.
-                if fingerprint(state) != last_fp:
-                    log.write(json.dumps({"t": round(time.monotonic() - t0, 3), "ts": round(time.time(), 3),
-                                          "state": state}) + "\n")
-                    n += 1
-                # The game-over screen shows 0 HP after a win too.
-                outcome = "victory" if reached_ending else "death"
-                print(f"Game over ({outcome}); {n} states recorded.", flush=True)
+                log.write(json.dumps({"t": round(time.monotonic() - t0, 3), "ts": round(time.time(), 3),
+                                      "state": state, "result": result}) + "\n")
+                n += 1
+                print(f"Game over ({outcome}"
+                      + (f", {result['run_time'] / 60:.1f} min game time" if result else "")
+                      + f"); {n} states recorded.", flush=True)
                 break
             time.sleep(args.shop_poll if st in ("shop", "fake_merchant") else args.poll)
     if n == 0 and args.file is None:
@@ -125,6 +169,9 @@ def main() -> int:
     p.add_argument("--character", default="IRONCLAD")
     p.add_argument("--nudge-map", type=float, default=0.0,
                    help="with --start-runs: pick the next map node ourselves when the map is unchanged "
+                        "this many seconds (0 = never)")
+    p.add_argument("--nudge-fight", type=float, default=0.0,
+                   help="with --start-runs: make one combat move ourselves when a fight is unchanged "
                         "this many seconds (0 = never)")
     args = p.parse_args()
 

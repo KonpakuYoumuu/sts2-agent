@@ -97,6 +97,7 @@ def supervise_recording(args: argparse.Namespace) -> int:
     """
     recorder = None
     restarts = 0
+    stall_restarts: list[float] = []
     launched = time.time()
     try:
         while True:
@@ -112,22 +113,57 @@ def supervise_recording(args: argparse.Namespace) -> int:
                     time.sleep(5)
                     continue
                 launched = time.time()
+                recent = [t for t in stall_restarts if t > time.time() - 30 * 60]
+                if len(recent) >= 3:
+                    # Reloading resumes the same spot (e.g. an event that crashes headless); give up on this run.
+                    _abandon_saved_run()
+                    stall_restarts.clear()
             if recorder is None or recorder.poll() is not None:
                 recorder = subprocess.Popen([sys.executable, "-u", "-m", "agent.harness.record_human",
-                                             "--loop", "--start-runs", "--nudge-map", "20",
+                                             "--loop", "--start-runs", "--nudge-map", "8", "--nudge-fight", "180",
                                              "--out", str(args.log_dir)])
             st, last_write = _activity(args.log_dir)
             idle = time.time() - max(last_write, launched)
             limit = args.stall_minutes * 60 if st in COMBAT_TYPES or st == "hand_select" else args.idle_seconds
             if idle > limit:
                 print(f"State unchanged for {idle:.0f} s on '{st}'; restarting the game.", flush=True)
+                stall_restarts.append(time.time())
+                # The recorder goes too: it mustn't click "continue" before a stuck run is abandoned.
+                _kill_tree(recorder)
+                recorder = None
                 subprocess.run(["taskkill", "/F", "/IM", "SlayTheSpire2.exe"], capture_output=True)
                 time.sleep(5)
                 continue
             time.sleep(15)
     finally:
-        if recorder is not None and recorder.poll() is None:
-            recorder.terminate()
+        _kill_tree(recorder)
+
+
+def _kill_tree(proc: subprocess.Popen | None) -> None:
+    """Stop a child Python and its own children (the venv's python.exe is a launcher)."""
+    if proc is not None and proc.poll() is None:
+        subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)], capture_output=True)
+
+
+def _abandon_saved_run(timeout: float = 90.0) -> None:
+    client = GameClient()
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        try:
+            state = client.get_state()
+        except Exception:
+            time.sleep(2)
+            continue
+        options = [o if isinstance(o, str) else o.get("name") for o in state.get("options") or []]
+        if state.get("menu_screen") == "main" and "abandon_run" in options:
+            client.act({"action": "menu_select", "option": "abandon_run"})
+        elif state.get("menu_screen") == "popup" and "yes" in options:
+            client.act({"action": "menu_select", "option": "yes"})
+            print("Stuck in the same run after 3 restarts; abandoned it.", flush=True)
+            return
+        elif state.get("menu_screen") == "main" and options:
+            return  # no saved run
+        time.sleep(1)
 
 
 def main() -> int:

@@ -65,6 +65,7 @@ public static partial class McpMod
             "discard_potion" => ExecuteDiscardPotion(player, data),
             "end_turn" => ExecuteEndTurn(player),
             "choose_map_node" => ExecuteChooseMapNode(data),
+            "map_refresh" => ExecuteMapRefresh(),
             "choose_event_option" => ExecuteChooseEventOption(data),
             "advance_dialogue" => ExecuteAdvanceDialogue(),
             "choose_rest_option" => ExecuteChooseRestOption(data),
@@ -424,6 +425,17 @@ public static partial class McpMod
             ["status"] = "ok",
             ["message"] = $"Purchasing item for {entry.Cost} gold"
         };
+    }
+
+    // Re-announces that map travel is enabled. Mods that react to it (AutoSTS2 hooks
+    // NMapScreen.SetTravelEnabled) get another chance after missing the map opening.
+    private static Dictionary<string, object?> ExecuteMapRefresh()
+    {
+        var mapScreen = NMapScreen.Instance;
+        if (mapScreen == null || (!mapScreen.IsOpen && !IsNodeVisible(mapScreen)))
+            return Error("Map screen is not open");
+        mapScreen.SetTravelEnabled(true);
+        return new Dictionary<string, object?> { ["status"] = "ok", ["message"] = "Map travel re-enabled" };
     }
 
     private static Dictionary<string, object?> ExecuteChooseMapNode(Dictionary<string, JsonElement> data)
