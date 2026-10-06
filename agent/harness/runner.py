@@ -20,7 +20,7 @@ from typing import Any
 
 from agent.bots.base import Policy
 from agent.interface.actions import PROGRESS_ACTIONS, Action, action_key, legal_actions
-from agent.interface.client import GameClient, State, StateTimeout, is_victory_event
+from agent.interface.client import COMBAT_TYPES, GameClient, State, StateTimeout, is_victory_event
 
 # After this many visits to an identical state, only progress actions are allowed.
 MAX_VISITS_BEFORE_FORCING = 25
@@ -171,6 +171,22 @@ class Runner:
             time.sleep(self.client.poll_interval)
         return self.client.wait_for_input(timeout=60)
 
+    def _await_next_round(self, before: State, after: State, timeout: float = 30.0) -> State:
+        """After an accepted end_turn: don't decide again until the next round (or the fight is over).
+
+        A state that still shows the old round is stale; acting on it ends the next
+        round before anything is played.
+        """
+        old_round = (before.get("battle") or {}).get("round")
+        deadline = time.monotonic() + timeout
+        state = after
+        while (state.get("state_type") in COMBAT_TYPES
+               and (state.get("battle") or {}).get("round") == old_round
+               and time.monotonic() < deadline):
+            time.sleep(self.client.poll_interval)
+            state = self.client.wait_for_input(timeout=60)
+        return state
+
     def _wait_for_actions(self, state: State, timeout: float = 10.0) -> State:
         """Some screens are briefly empty while loading; re-poll before giving up."""
         deadline = time.monotonic() + timeout
@@ -228,6 +244,8 @@ class Runner:
                     res = self.client.act(action)
                     new_state = self._await_change(
                         fp, 0.4 if action["action"] in NOOP_EXEMPT else CHANGE_TIMEOUT)
+                    if action["action"] == "end_turn" and res.ok:
+                        new_state = self._await_next_round(state, new_state)
                     changed = fingerprint(new_state) != fp
                     if not res.ok and not changed:
                         banned.add((fp, action_key(action)))
@@ -242,6 +260,7 @@ class Runner:
                         "ok": res.ok, "message": res.message, "changed": changed,
                         **getattr(self.policy, "last_info", {}),
                     }) + "\n")
+                    log.flush()
                     result.steps = step + 1
                     if step % 25 == 0 or st in ("map", "game_over"):
                         run = new_state.get("run") or {}
